@@ -1,4 +1,3 @@
-
 const config = {
     typingDelayMin: 50,
     typingDelayMax: 150,
@@ -62,6 +61,27 @@ const delayedFields = {
     'residence-address-municipality-0': 2000,
     'residence-address-street-0': 2000,
     'fs13-0-travel-doc-type': 500,
+
+    's42-check-gdpr-info': 1000,
+
+     'submitter1': 650,
+
+
+    //////////////
+    //////////////
+    //////////////
+
+    // 'f1-citizenship': 1000,
+    // 'f1-purpose-of-stay': 1000,
+    // 'submitter1': 350,
+
+    //////////////
+    //////////////
+    //////////////
+
+
+
+
 };
 const step1Fields = [
     ['fs3-name-10', "Taras", 'text'],
@@ -93,9 +113,58 @@ const step1Fields = [
 ];
 
 const step2Fields = [
+    ['OCP Bratislava - 14.05.2025', true, 'radio'], // ✅ точний ID із HTML
+    // ['OCP Banská Bystrica', true, 'radio'],
+    // ['OCP Dunajská Streda', true, 'radio'],
+    // ['OCP Košice', true, 'radio'],
+    // ['OCP Michalovce', true, 'radio'],
+    // ['OCP Nitra', true, 'radio'],
+    // ['OCP Nové Zámky', true, 'radio'],
+    // ['OCP Presov', true, 'radio'],
+    // ['OCP Rimavská Sobota', true, 'radio'],
+    // ['OCP Ruzomberok', true, 'radio'],
+    // ['OCP Trencín', true, 'radio'],
+    // ['OCP Trnava', true, 'radio'],
+    // ['OCP Zilina', true, 'radio'],
+
     ['s42-check-gdpr-info', true, 'checkbox'], // true для checked
     ['fs13-0-travel-doc-type', "1", 'select'],
     ['fs13-travel-doc-number', "C2847", 'text'],
+
+
+
+
+
+
+
+
+    //////////////
+    //////////////
+    //////////////
+
+
+    // ['f1-previous-permit', "true", 'select'], // Значення для select
+    // ['f1-citizenship', "UKR", 'select'],
+    // ['f1-purpose-of-stay', "16", 'select'],
+    // //['f1-purpose-of-stay', "18", 'select'],
+    // // student 16 - podnikanie, 18 - student
+
+
+    //////////////
+    //////////////
+    //////////////
+
+
+
+    ['submitter1', null, 'click'],
+
+    //////////////
+    //////////////
+    //////////////
+
+
+
+
 ];
 
 const step3Fields = [
@@ -183,6 +252,11 @@ async function fillFields(fields, label) {
                     console.log(`⚙️ Спеціальна логіка для ${id}`);
                     await value(el); // value — це функція
                     break;
+                case 'radio':
+                    console.log(`🔘 Вибір радіо-кнопки ${id}`);
+                    el.checked = true;
+                    triggerEvents(el);
+                    break;
 
 
                 default:
@@ -202,8 +276,27 @@ async function fillFields(fields, label) {
     console.log(`--- Завершено: ${label} ---`);
 }
 
+// try {
+//     history.replaceState(null, null, location.href);
+//     localStorage.clear();
+//     sessionStorage.clear();
+//     document.cookie.split(";").forEach(cookie => {
+//         document.cookie = cookie
+//             .replace(/^ +/, "")
+//             .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+//     });
+//     console.log("🧹 Історія браузера та кеш очищено.");
+// } catch (err) {
+//     console.warn("⚠️ Помилка при очищенні:", err);
+// }
+
 try {
-    history.replaceState(null, null, location.href);
+    history.replaceState({}, document.title, location.pathname); // очищення URL
+    history.pushState(null, null, location.href); // створюємо фейковий запис
+    window.addEventListener('popstate', function () {
+        history.pushState(null, null, location.href); // блокуємо назад
+    });
+
     localStorage.clear();
     sessionStorage.clear();
     document.cookie.split(";").forEach(cookie => {
@@ -211,10 +304,12 @@ try {
             .replace(/^ +/, "")
             .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
     });
-    console.log("🧹 Історія браузера та кеш очищено.");
+    console.log("🧹 Історія браузера, localStorage, sessionStorage і cookies очищено.");
 } catch (err) {
     console.warn("⚠️ Помилка при очищенні:", err);
 }
+
+
 
 (async () => {
     console.log("⏳ Очікування натискання кнопки #langSK...");
@@ -232,14 +327,21 @@ try {
 
         console.log("⏳ Очікування на вибір одного з міст (радіо-кнопки)...");
 
-        const triggerStep2Button = await waitForElement('f1-offices');
+        // const triggerStep2Button = await waitForElement('f1-offices');
+        // if (!triggerStep2Button) {
+        //     console.error('❌ Не вдалося знайти блок з містами (#f1-offices).');
+        //     return;
+        // }
+
+
+        const triggerStep2Button = await waitForElement('f1-life-situation-select2');
         if (!triggerStep2Button) {
-            console.error('❌ Не вдалося знайти блок з містами (#f1-offices).');
+            console.error('❌ Не вдалося знайти елемент (#f1-life-situation-select2).');
             return;
         }
 
-        triggerStep2Button.addEventListener('click', async () => {
-            const delay = randomDelay(800, 1500);
+        triggerStep2Button.addEventListener('change', async () => {
+            const delay = randomDelay(1700, 2500);
             console.log(`🚀 Кнопка Кроку 2 натиснута. Запуск Кроку 2 через ${delay} мс...`);
             await wait(delay);
             await fillFields(step2Fields, '[Step 2]');
@@ -248,5 +350,48 @@ try {
 
         console.log("📝 Крок 1 завершено. Очікування на клік Кроку 2...");
     }, { once: true });
+
+
+
+
+
+
+    ///////////////////////
+    ///////////////////////
+    ///////////////////////
+
+
+//
+//     // --- Перехід до Кроку 3 ---
+//     console.log("⏳ Очікування кнопки #submitter1 для переходу до Кроку 3...");
+//     const triggerStep3Button = await waitForElement('submitter1');
+//     if (!triggerStep3Button) {
+//         console.error('❌ Кнопку #submitter1 не знайдено. Наступний крок неможливий.');
+//         return;
+//     }
+//
+//     triggerStep3Button.addEventListener('click', async () => {
+//         const delayStep3 = randomDelay(config.stepTransitionDelayMin, config.stepTransitionDelayMax);
+//         console.log(`🚀 Кнопка Кроку 3 натиснута. Запуск Кроку 3 через ${delayStep3} мс...`);
+//         await wait(delayStep3);
+//         await fillFields(step3Fields, '[Step 3]');
+//         console.log("✅🏁 Всі кроки завершено!");
+//     }, { once: true });
+//
+// }, { once: true });
+//
+// console.log("📝 Крок 1 завершено. Очікування на клік Кроку 2...");
+// }, { once: true });
+
+
+    ///////////////////////
+    ///////////////////////
+    ///////////////////////
+
+
+
+
+
+
 
 })();
