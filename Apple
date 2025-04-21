@@ -80,12 +80,12 @@
     };
 
     const step1Fields = [
-        ['fs3-name-10', "Maksym", 'text'],
-        ['fs1-surname-10', "Kuznetsov", 'text'],
+        ['fs3-name-10', "Vadym", 'text'],
+        ['fs1-surname-10', "Dmytrenko", 'text'],
         ['fs7-date-of-birth0', async (el) => {
             el.focus();
             await wait(100);
-            el.value = '27.11.2024';
+            el.value = '17.11.1987';
             triggerEvents(el);
             await wait(200);
             for (let i = 0; i < 10; i++) {
@@ -100,8 +100,8 @@
             }
             triggerEvents(el);
         }, 'custom'],
-        ['s41-delivery-phone-captcha', "+421917086096", 'text'],
-        ['email0', "vasko_petro@yahoo.com", 'text'],
+        ['s41-delivery-phone-captcha', "+421917086166", 'text'],
+        ['email0', "Jankovskyy123@yahoo.com", 'text'],
     ];
 
     const step2Fields = [
