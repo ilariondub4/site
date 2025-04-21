@@ -105,7 +105,7 @@
     ];
 
     const step2Fields = [
-        ['OCP Trencín - 13.05.2025', true, 'radio'],
+        ['OCP Trenčín - 13.05.2025', true, 'radio'],
         ['s42-check-gdpr-info', true, 'checkbox'],
         ['fs13-0-travel-doc-type', "1", 'select'],
         ['fs13-travel-doc-number', "C2847", 'text'],
