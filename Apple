@@ -80,12 +80,12 @@
     };
 
     const step1Fields = [
-        ['fs3-name-10', "Vadym", 'text'],
-        ['fs1-surname-10', "Dmytrenko", 'text'],
+        ['fs3-name-10', "Nikita", 'text'],
+        ['fs1-surname-10', "Chemerys", 'text'],
         ['fs7-date-of-birth0', async (el) => {
             el.focus();
             await wait(100);
-            el.value = '17.11.1987';
+            el.value = '21.05.2004';
             triggerEvents(el);
             await wait(200);
             for (let i = 0; i < 10; i++) {
@@ -105,10 +105,10 @@
     ];
 
     const step2Fields = [
-        ['OCP Trnava - 13.05.2025', true, 'radio'],
+        ['OCP Nitra - 16.05.2025', true, 'radio'],
         ['s42-check-gdpr-info', true, 'checkbox'],
         ['fs13-0-travel-doc-type', "1", 'select'],
-        ['fs13-travel-doc-number', "C2847", 'text'],
+        ['fs13-travel-doc-number', "C2927", 'text'],
         ['submitter1', null, 'click'],
     ];
 
