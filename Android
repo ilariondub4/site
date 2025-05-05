@@ -12,7 +12,7 @@
 (function() {
     'use strict';
 
-    const OPENAI_API_KEY = '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';
+    const OPENAI_API_KEY = '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';
 
     const config = {
         typingDelayMin: 50,
