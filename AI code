@@ -1,0 +1,295 @@
+// ==UserScript==
+// @name         MINV Autofill + CAPTCHA + WebOTP
+// @namespace    Violentmonkey Scripts
+// @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
+// @grant        none
+// @version      1.2
+// @author       -
+// @description  Автоматичне заповнення форми MINV з розпізнаванням CAPTCHA та автозчитуванням SMS-коду через WebOTP (якщо підтримується)
+// @run-at       document-end
+// ==/UserScript==
+
+(function () {
+  "use strict";
+
+  /* ---------- 🔐 USER CONSTANTS ---------- */
+  const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY";          // <-- замініть на свій ключ
+  const USER_NAME = "Oleh";
+  const USER_SURNAME = "Lysak";
+  const USER_BIRTHDATE = "11.08.1975";
+  const USER_PHONE = "+421904164965";
+  const USER_EMAIL = "Jankovskyy123@yahoo.com";
+  const USER_CITY_ID = "OCP Trnava - 13.06.2025";        // value radio‑кнопки
+  const USER_PASSPORT = "C2927";
+  const STEP3_SELECT_1_VALUE = "216";                    // value у <select id="f1-life-situation-select1">
+  const STEP3_SELECT_2_VALUE = "244";                    // value у <select id="f1-life-situation-select2">
+
+  /* Якщо id кнопки «Надіслати SMS» інший – змініть тут */
+  const SEND_SMS_BUTTON_ID = "sendSmsBtn";
+  const PIN_INPUT_SELECTOR = "#pin-code";                // селектор поля з PIN‑кодом
+
+  /* ---------- CONFIG ---------- */
+  const cfg = {
+    typingDelayMin: 50,
+    typingDelayMax: 150,
+    preFieldDelayMin: 300,
+    preFieldDelayMax: 800,
+    postFieldDelayMin: 80,
+    postFieldDelayMax: 200,
+    delayedFieldJitterMin: 50,
+    delayedFieldJitterMax: 250,
+    waitForElementMaxAttempts: 50,
+    waitForElementInterval: 200
+  };
+
+  /* ---------- HELPERS ---------- */
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const triggerEvents = el => {
+    ["input", "change", "blur"].forEach(t => el.dispatchEvent(new Event(t, { bubbles: true })));
+  };
+
+  const waitForElement = selector =>
+    new Promise(resolve => {
+      let tries = 0;
+      const timer = setInterval(() => {
+        const el = document.querySelector(selector);
+        if (el || ++tries >= cfg.waitForElementMaxAttempts) {
+          clearInterval(timer);
+          resolve(el);
+        }
+      }, cfg.waitForElementInterval);
+    });
+
+  async function typeLikeHuman(el, value) {
+    el.value = "";
+    triggerEvents(el);
+    await wait(rand(50, 100));
+    for (const ch of String(value)) {
+      el.value += ch;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      await wait(rand(cfg.typingDelayMin, cfg.typingDelayMax));
+    }
+    triggerEvents(el);
+  }
+
+  async function imageToBase64(img) {
+    return new Promise(res => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      res(canvas.toDataURL("image/png"));
+    });
+  }
+
+  async function solveCaptcha() {
+    const img = await waitForElement("#captchaImage");
+    const input = await waitForElement("#answer");
+    if (!img || !input) return;
+
+    const base64 = await imageToBase64(img);
+    const result = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text:
+                  "Які символи на цій капчі? Дай тільки 5 символів, малі латинські та/або цифри."
+              },
+              {
+                type: "image_url",
+                image_url: { url: base64 }
+              }
+            ]
+          }
+        ],
+        max_tokens: 5
+      })
+    }).then(r => r.json());
+
+    const code = result?.choices?.[0]?.message?.content?.trim() || "";
+    if (code.length === 5) {
+      await typeLikeHuman(input, code);
+    }
+  }
+
+  /* ---------- FIELD MAPS ---------- */
+  const delayedFields = {
+    "residence-address-county-0": 2000,
+    "residence-address-municipality-0": 2000,
+    "residence-address-street-0": 2000,
+    "fs13-0-travel-doc-type": 500,
+    "s42-check-gdpr-info": 1000,
+    submitter1: 650
+  };
+
+  const step1 = [
+    ["#fs3-name-10", USER_NAME, "text"],
+    ["#fs1-surname-10", USER_SURNAME, "text"],
+    [
+      "#fs7-date-of-birth0",
+      async el => {
+        el.focus();
+        await wait(100);
+        el.value = USER_BIRTHDATE;
+        triggerEvents(el);
+      },
+      "custom"
+    ],
+    ["#s41-delivery-phone-captcha", USER_PHONE, "text"],
+    ["#email0", USER_EMAIL, "text"],
+    ["#loadSecondFormButton", el => el.click(), "custom"]
+  ];
+
+  const step2 = [
+    [`input[value='${USER_CITY_ID}']`, true, "radio"],
+    ["#s42-check-gdpr-info", true, "checkbox"],
+    ["#fs13-0-travel-doc-type", "1", "select"],
+    ["#fs13-travel-doc-number", USER_PASSPORT, "text"],
+    ["#submitter1", null, "click"]
+  ];
+
+  async function fill(fields, label) {
+    for (const [sel, val, type] of fields) {
+      const el = await waitForElement(sel);
+      if (!el) continue;
+
+      const pre =
+        (delayedFields[el.id] || 0) + rand(cfg.preFieldDelayMin, cfg.preFieldDelayMax);
+      await wait(pre);
+      try {
+        switch (type) {
+          case "text":
+            await typeLikeHuman(el, val);
+            break;
+          case "select":
+            el.value = val;
+            triggerEvents(el);
+            break;
+          case "checkbox":
+            el.checked = !!val;
+            triggerEvents(el);
+            break;
+          case "radio":
+            el.checked = true;
+            triggerEvents(el);
+            break;
+          case "click":
+            el.click();
+            break;
+          case "custom":
+            await val(el);
+            break;
+        }
+      } catch (e) {
+        console.error(`${label} ${sel}`, e);
+      }
+      await wait(rand(cfg.postFieldDelayMin, cfg.postFieldDelayMax));
+    }
+  }
+
+  /* ---------- PIN‑FLOW ---------- */
+  async function handlePinReady(code) {
+    console.log("PIN ready:", code);
+    await wait(500);
+
+    // select 1
+    const select1 = document.querySelector("#f1-life-situation-select1");
+    const opt1 = select1?.querySelector(`option[value='${STEP3_SELECT_1_VALUE}']`);
+    if (opt1) {
+      opt1.selected = true;
+      triggerEvents(select1);
+    }
+
+    await wait(1000);
+
+    // select 2
+    const select2 = document.querySelector("#f1-life-situation-select2");
+    const opt2 = select2?.querySelector(`option[value='${STEP3_SELECT_2_VALUE}']`);
+    if (opt2) {
+      opt2.selected = true;
+      triggerEvents(select2);
+    }
+
+    await wait(1000);
+
+    // submit
+    const submit = document.querySelector("#submitter1");
+    submit?.click();
+    console.log("🚀 submitter1 clicked");
+  }
+
+  /* ---------- WEBOTP ---------- */
+  async function attachWebOtp(pinInput) {
+    pinInput.setAttribute("autocomplete", "one-time-code");
+    pinInput.setAttribute("inputmode", "numeric");
+    pinInput.setAttribute("maxlength", "5");
+    pinInput.setAttribute("pattern", "\\d{5}");
+
+    // Manual typing
+    pinInput.addEventListener("input", e => {
+      const code = e.target.value.trim();
+      if (code.length === 5) handlePinReady(code);
+    });
+
+    // SMS auto-fill inside user gesture
+    const sendBtn = await waitForElement(`#${SEND_SMS_BUTTON_ID}`);
+    if (!sendBtn) return;
+
+    sendBtn.addEventListener("click", async () => {
+      if (!("OTPCredential" in window)) return;
+      try {
+        const abort = new AbortController();
+        setTimeout(() => abort.abort(), 120000); // 2 хв
+        const otp = await navigator.credentials.get({
+          otp: { transport: ["sms"] },
+          signal: abort.signal
+        });
+        if (otp?.code?.length === 5) {
+          pinInput.value = otp.code;
+          triggerEvents(pinInput);
+          handlePinReady(otp.code);
+        }
+      } catch (err) {
+        console.warn("WebOTP failed:", err);
+      }
+    });
+  }
+
+  /* ---------- MAIN ---------- */
+  (async () => {
+    console.log("🚀 MINV autofill start");
+
+    await wait(rand(800, 1500));
+    await solveCaptcha();
+    await fill(step1, "[Step1]");
+
+    // чекаємо появу селектора з містами (тригер 2‑го кроку)
+    const citySelect = await waitForElement("#f1-life-situation-select2");
+    if (!citySelect) return console.error("select2 not found");
+
+    citySelect.addEventListener("change", async () => {
+      await wait(rand(1700, 2500));
+      await fill(step2, "[Step2]");
+      console.log("✅ Step2 done");
+
+      // attach WebOTP
+      const pinInput = await waitForElement(PIN_INPUT_SELECTOR);
+      if (pinInput) {
+        attachWebOtp(pinInput);
+        console.log("📲 PIN input ready");
+      }
+    }, { once: true });
+  })();
+})();
