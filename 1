@@ -1,0 +1,313 @@
+// ==UserScript==
+// @name         MINV Autofill Logger + CAPTCHA + City StartsWith
+// @namespace    Violentmonkey Scripts
+// @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
+// @grant        none
+// @version      1.2
+// @author       -
+// @description  Автоматичне заповнення форми MINV з логами + розпізнавання CAPTCHA через OpenAI + вибір міста за startsWith
+// @run-at       document-end
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // 🔐 Константи користувача
+    const OPENAI_API_KEY = 'sk-proj-eScd1-9UDwydqamn1fAGbNH5N9wmXMAfISig0-s8iUeSE6enbiQfsTXgVEDB5sIugw9iSwylVjT3BlbkFJ515Lm1qwf7ictjskEVu6p4-AYvS-4JfTfSk1xyc2p_6xdi4pw552uoVKN3QhKkCqzwIPAF4v';
+    const USER_NAME = 'Oleh';
+    const USER_SURNAME = 'Lysak';
+    const USER_BIRTHDATE = '11.08.1975';
+    const USER_PHONE = '+421904164965';
+    const USER_EMAIL = 'Jankovskyy123@yahoo.com';
+    const USER_CITY = 'OCP Trnava'; // 🟢 Назва міста без дати
+    const USER_PASSPORT = 'C2927';
+    const STEP3_SELECT_1_VALUE = '216';
+    const STEP3_SELECT_2_VALUE = '244';
+
+    const config = {
+        typingDelayMin: 50,
+        typingDelayMax: 150,
+        preFieldDelayMin: 300,
+        preFieldDelayMax: 800,
+        postFieldDelayMin: 80,
+        postFieldDelayMax: 200,
+        delayedFieldJitterMin: 50,
+        delayedFieldJitterMax: 250,
+        waitForElementMaxAttempts: 50,
+        waitForElementInterval: 200,
+    };
+
+    function triggerEvents(el) {
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.dispatchEvent(new Event('blur', { bubbles: true }));
+    }
+
+    function wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function randomDelay(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    async function typeValue(el, value) {
+        el.value = '';
+        triggerEvents(el);
+        await wait(randomDelay(50, 100));
+
+        for (const char of String(value)) {
+            el.value += char;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            await wait(randomDelay(config.typingDelayMin, config.typingDelayMax));
+        }
+        triggerEvents(el);
+    }
+
+    function waitForElement(id) {
+        return new Promise(resolve => {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                const el = document.getElementById(id);
+                if (el) {
+                    clearInterval(interval);
+                    console.log(`✅ Знайдено елемент: ${id}`);
+                    resolve(el);
+                } else if (++attempts >= config.waitForElementMaxAttempts) {
+                    clearInterval(interval);
+                    console.warn(`❌ Не знайдено елемент: ${id}`);
+                    resolve(null);
+                }
+            }, config.waitForElementInterval);
+        });
+    }
+
+    async function imageToBase64(img) {
+        return new Promise(resolve => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL("image/png"));
+        });
+    }
+
+    async function recognizeCaptcha(imageDataUrl) {
+        console.log("🔍 Відправка зображення капчі в OpenAI...");
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${OPENAI_API_KEY}`,
+                "OpenAI-Beta": "assistants=v1",
+                "OpenAI-Project": "proj_NtHUbQd0hgmD2cIO6zb7VRUj"
+            },
+            body: JSON.stringify({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: "Що зображено на цій капчі? Напиши лише символи без пояснень." },
+                            { type: "image_url", image_url: { url: imageDataUrl } }
+                        ]
+                    }
+                ],
+                max_tokens: 10
+            }),
+        });
+
+        const result = await response.json();
+        console.log("📩 Відповідь від OpenAI:", result);
+
+        const captchaText = result?.choices?.[0]?.message?.content?.trim();
+        return captchaText;
+    }
+
+    async function typeCaptchaLikeHuman(el, text) {
+        el.focus();
+        el.value = '';
+        triggerEvents(el);
+
+        for (const char of text) {
+            const evt = new KeyboardEvent('keydown', { key: char, bubbles: true });
+            el.dispatchEvent(evt);
+            el.value += char;
+            triggerEvents(el);
+            await wait(100);
+        }
+
+        triggerEvents(el);
+        el.blur();
+        console.log("✅ Капча введена через емуляцію клавіатури.");
+    }
+
+    async function solveCaptcha() {
+        const imgEl = await waitForElement("captchaImage");
+        const inputEl = await waitForElement("answer");
+
+        if (!imgEl || !inputEl) {
+            console.warn("⚠️ Не знайдено елементи капчі.");
+            return;
+        }
+
+        const base64 = await imageToBase64(imgEl);
+        const captchaResult = await recognizeCaptcha(base64);
+
+        if (captchaResult) {
+            console.log(`✅ Розпізнано капчу: ${captchaResult}`);
+            inputEl.focus();
+            inputEl.value = '';
+            await wait(100);
+            await typeCaptchaLikeHuman(inputEl, captchaResult);
+            inputEl.blur();
+            inputEl.style.border = "2px solid lime";
+            inputEl.style.backgroundColor = "#eaffea";
+            setTimeout(() => {
+                inputEl.style.border = "";
+                inputEl.style.backgroundColor = "";
+            }, 3000);
+            console.log("✍️ Введено капчу в поле input#answer");
+        } else {
+            console.warn("❌ Не вдалося розпізнати капчу.");
+        }
+    }
+
+    const delayedFields = {
+        'residence-address-county-0': 2000,
+        'residence-address-municipality-0': 2000,
+        'residence-address-street-0': 2000,
+        'fs13-0-travel-doc-type': 500,
+        's42-check-gdpr-info': 1000,
+        'submitter1': 650,
+    };
+
+    const step1Fields = [
+        ['fs3-name-10', USER_NAME, 'text'],
+        ['fs1-surname-10', USER_SURNAME, 'text'],
+        ['fs7-date-of-birth0', async (el) => {
+            el.focus(); await wait(100);
+            el.value = USER_BIRTHDATE; triggerEvents(el);
+            await wait(200);
+            for (let i = 0; i < 10; i++) {
+                el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+                el.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowLeft', bubbles: true }));
+                await wait(50);
+            }
+            for (let i = 0; i < 2; i++) {
+                el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+                el.dispatchEvent(new KeyboardEvent('keyup', { key: 'Delete', bubbles: true }));
+                await wait(50);
+            }
+            triggerEvents(el);
+        }, 'custom'],
+        ['s41-delivery-phone-captcha', USER_PHONE, 'text'],
+        ['email0', USER_EMAIL, 'text'],
+        ['loadSecondFormButton', (el) => el.click(), 'custom'],
+    ];
+
+    const step2Fields = [
+        // 🟢 Замість точного ID — вибір першого, що починається на місто
+        [USER_CITY, true, 'radio'],
+        ['s42-check-gdpr-info', true, 'checkbox'],
+        ['fs13-0-travel-doc-type', "1", 'select'],
+        ['fs13-travel-doc-number', USER_PASSPORT, 'text'],
+        ['submitter1', null, 'click'],
+    ];
+
+    async function fillFields(fields, label) {
+        for (const [id, value, type] of fields) {
+            let el = document.getElementById(id);
+
+            if (!el && type === 'radio') {
+                el = [...document.querySelectorAll('input[type="radio"][name="offices"]')]
+                    .find(el => el.id && el.id.startsWith(id));
+                if (el) console.log(`🎯 Знайдено місто за startsWith: ${el.id}`);
+            }
+
+            if (!el) continue;
+
+            let preDelay = delayedFields[id]
+                ? delayedFields[id] + randomDelay(config.delayedFieldJitterMin, config.delayedFieldJitterMax)
+                : randomDelay(config.preFieldDelayMin, config.preFieldDelayMax);
+
+            await wait(preDelay);
+            el.focus();
+            await wait(randomDelay(50, 150));
+
+            try {
+                switch (type) {
+                    case 'text': await typeValue(el, value); break;
+                    case 'select': el.value = value; triggerEvents(el); break;
+                    case 'checkbox': el.checked = Boolean(value); triggerEvents(el); break;
+                    case 'click': el.click(); break;
+                    case 'custom': await value(el); break;
+                    case 'radio': el.checked = true; triggerEvents(el); break;
+                }
+            } catch (e) {
+                console.error(`[${label}] Error: ${id}`, e);
+            }
+
+            await wait(randomDelay(config.postFieldDelayMin, config.postFieldDelayMax));
+        }
+    }
+
+    (async () => {
+        console.log("🚀 Старт автозаповнення");
+        await wait(randomDelay(800, 1500));
+        await solveCaptcha();
+        await fillFields(step1Fields, '[Step 1]');
+
+        const triggerStep2Button = await waitForElement('f1-life-situation-select2');
+        if (!triggerStep2Button) {
+            console.error('❌ Не знайдено select для міст');
+            return;
+        }
+
+        triggerStep2Button.addEventListener('change', async () => {
+            await wait(randomDelay(1700, 2500));
+            await fillFields(step2Fields, '[Step 2]');
+            console.log("✅ Крок 2 завершено");
+        }, { once: true });
+
+        const pinCodeEl = await waitForElement("pin-code");
+        if (pinCodeEl) {
+            pinCodeEl.addEventListener('input', async () => {
+                console.log("📨 PIN-код введено, очікуємо 10 секунд...");
+                await wait(10000);
+
+                const select1 = document.getElementById("f1-life-situation-select1");
+                const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
+                if (option1) {
+                    option1.selected = true;
+                    select1.dispatchEvent(new Event('input', { bubbles: true }));
+                    select1.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log("✅ Вибрано перше поле f1-life-situation-select1");
+                }
+
+                await wait(2000);
+
+                const select2 = document.getElementById("f1-life-situation-select2");
+                const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
+                if (option2) {
+                    option2.selected = true;
+                    select2.dispatchEvent(new Event('input', { bubbles: true }));
+                    select2.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log("✅ Вибрано друге поле f1-life-situation-select2");
+                }
+
+                await wait(1000);
+
+                const finalBtn = document.getElementById("submitter1");
+                if (finalBtn) {
+                    finalBtn.click();
+                    console.log("🚀 Натиснуто кнопку submitter1");
+                }
+            }, { once: true });
+        }
+
+        console.log("📝 Очікування вибору міста...");
+    })();
+})();
