@@ -13,16 +13,18 @@
     'use strict';
 
     // 🔐 Константи користувача
-    const OPENAI_API_KEY = 'sk-proj-iRXte7QBw41n495PX9tsu2KXtJLlKRT_lzDPQD2MiP1Sbzi8KMrVeLvrvZNyUrh09GxLs609hkT3BlbkFJtgjY7dSuDleG5aAbPX-05_bYa7e1xDJtKX2UFRYuUIjgLjo7ZralAvfAu1dv_WKORfNRqxM68';
+    const OPENAI_API_KEY = 'sk-proj-iRXte7QBw41n495PX9tsu2KXtJLlKRT_lzDPQD2MiP1Sbzi8KMrVeLvrvZNyUrh09GxLs609hkT3BlbkFJtgjY7dSuDleG5aAbPX-05_bYa7e1xDJtKX2UFRYuUIjgLjo7ZralAvfAu1dv_WKORfNRqxM68AA';
     const USER_NAME = 'Ivan';
     const USER_SURNAME = 'Klotsbakh';
     const USER_BIRTHDATE = '11.07.2008';
-    const USER_PHONE = '+421944871385';
-    const USER_EMAIL = 'ivanikrakusinko1a1a1@gmail.com';
+    const USER_PHONE = '+421940083584';
+    const USER_EMAIL = 'martjonko71@gmail.com';
     const USER_CITY = 'OCP Trenčín'; // 🟢 Назва міста без дати
     const USER_PASSPORT = 'T';
-    const STEP3_SELECT_1_VALUE = '242';
-    const STEP3_SELECT_2_VALUE = '243';
+    const STEP3_SELECT_1_VALUE = '216';
+    const STEP3_SELECT_2_VALUE = '245';
+    const TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
+    const TELEGRAM_CHAT_ID = '814270232A'; // ID або username (з @)
 
     const config = {
         typingDelayMin: 50,
@@ -36,6 +38,21 @@
         waitForElementMaxAttempts: 50,
         waitForElementInterval: 200,
     };
+
+
+
+async function sendTelegramMessage(text) {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML'
+        })
+    }).catch(err => console.error("❌ Помилка Telegram:", err));
+}
 
     function triggerEvents(el) {
         el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -110,20 +127,26 @@
                     {
                         role: "user",
                         content: [
-                            { type: "text", text: "Що зображено на цій капчі? Напиши лише символи без пояснень." },
+                            { type: "text", text: "Що зображено на цій капчі? Напиши лише символи без пояснень. Це завжди малі англійські літери та цифри і відповідь завжди має 5 символів." },
                             { type: "image_url", image_url: { url: imageDataUrl } }
                         ]
                     }
                 ],
-                max_tokens: 10
+                max_tokens: 5
             }),
         });
 
         const result = await response.json();
         console.log("📩 Відповідь від OpenAI:", result);
 
-        const captchaText = result?.choices?.[0]?.message?.content?.trim();
-        return captchaText;
+let captchaText = result?.choices?.[0]?.message?.content?.trim();
+
+if (!captchaText || captchaText.length !== 5) {
+    console.warn(`⚠️ Невірна відповідь від AI (${captchaText}). Використовується '11111'`);
+    captchaText = "11111";
+} else {
+    console.log(`✅ Розпізнано капчу: ${captchaText}`);
+}        return captchaText;
     }
 
     async function typeCaptchaLikeHuman(el, text) {
@@ -270,7 +293,55 @@
             await wait(randomDelay(1700, 2500));
             await fillFields(step2Fields, '[Step 2]');
             console.log("✅ Крок 2 завершено");
+
+
+
+                    await wait(1500);
+
+//                    const matchingSlot = [...document.querySelectorAll('input[type="radio"][name="offices"]')]
+//                        .find(el => el.id && el.id.startsWith(USER_CITY) && el.offsetParent !== null && !el.disabled);
+
+const matchingSlot = [...document.querySelectorAll('input[type="radio"][name="offices"]')]
+    .find(el =>
+        el.id &&
+//        el.id.startsWith(USER_CITY) &&
+        el.id.includes(USER_CITY) &&
+        el.offsetParent !== null &&
+        !el.disabled
+    );
+
+                    if (matchingSlot) {
+                        matchingSlot.click();
+
+                        let timeInfo = 'невідомо';
+                        const label = document.querySelector(`label[for="${matchingSlot.id}"]`);
+                        if (label) {
+                            const match = label.textContent.match(/\d{2}:\d{2}/);
+                            if (match) {
+                                timeInfo = match[0];
+                            }
+                        }
+
+                        console.log("✅ Автоматично вибрано термін:", matchingSlot.id);
+
+                        // 🕒 Отримуємо час
+                        const now = new Date().toLocaleString();
+                        // 📩 Формуємо повідомлення
+//                        const message = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+const message = `🕒 ${now}
+📍 ${USER_CITY}
+🆔 ${matchingSlot.id}
+⏰ ${timeInfo}
+➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+                        await sendTelegramMessage(message);
+                    } else {
+                        console.log("❌ Термін не знайдено для міста:", USER_CITY);
+                    }
+
+
         }, { once: true });
+
+
 
         const pinCodeEl = await waitForElement("pin-code");
         if (pinCodeEl) {
@@ -300,11 +371,11 @@
 
                 await wait(1000);
 
-                const finalBtn = document.getElementById("submitter1");
-                if (finalBtn) {
-                    finalBtn.click();
-                    console.log("🚀 Натиснуто кнопку submitter1");
-                }
+//                const finalBtn = document.getElementById("submitter1");
+//                if (finalBtn) {
+//                    finalBtn.click();
+//                    console.log("🚀 Натиснуто кнопку submitter1");
+//                }
             }, { once: true });
         }
 
