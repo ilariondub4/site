@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         TP
+// @name         PPіфааф
 // @namespace    Violentmonkey Scripts
 // @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant        none
@@ -17,11 +17,11 @@
   ------------------------------------------------------------------ */
   const OPENAI_API_KEY =
     'sk-proj-iRXte7QBw41n495PX9tsu2KXtJLlKRT_lzDPQD2MiP1Sbzi8KMrVeLvrvZNyUrh09GxLs609hkT3BlbkFJtgjY7dSuDleG5aAbPX-05_bYa7e1xDJtKX2UFRYuUIjgLjo7ZralAvfAu1dv_WKORfNRqxM68AA';
-  const USER_NAME = 'Ivan';
-  const USER_SURNAME = 'Klotsbakh';
-  const USER_BIRTHDATE = '11.07.2008';
+  const USER_NAME = 'Mykola';
+  const USER_SURNAME = 'Dan';
+  const USER_BIRTHDATE = '01.06.1998';
   const USER_PHONE = '+421940083584';
-  const USER_EMAIL = 'ivanikrakusinko1a1a3@gmail.com';
+  const USER_EMAIL = 'martjonko71@gmail.com';
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
   const STEP3_SELECT_1_VALUE = '216';
@@ -71,6 +71,76 @@
     const r = (Math.random() + Math.random()) / 2; // 0–1  пік ≈0.5
     return Math.round(min + (max - min) * r);
   }
+
+
+
+  let lastMessageId = 0;
+
+async function checkTelegram() {
+  try {
+    console.log('🔁 Перевірка повідомлень Telegram…');
+
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`);
+    const data = await res.json();
+
+    if (!data.ok) {
+      console.warn('⚠️ Telegram API повернув помилку:', data);
+      return;
+    }
+
+    if (data.result.length === 0) {
+      console.log('📭 Повідомлень немає');
+      return;
+    }
+
+    const lastMsg = data.result[data.result.length - 1];
+
+    if (lastMsg.update_id <= lastMessageId) {
+      console.log('🔂 Немає нового повідомлення (update_id вже оброблено)');
+      return;
+    }
+
+    lastMessageId = lastMsg.update_id;
+    console.log('📨 Нове повідомлення:', lastMsg.message?.text || '(без тексту)');
+
+    console.log('🕵️‍♂️ Очікування появи select2 в DOM…');
+    let select2 = null;
+    for (let i = 0; i < 120; i++) { // 30 сек = 120 x 250мс
+      select2 = document.getElementById('f1-life-situation-select2');
+      if (select2) {
+        console.log('✅ Знайдено select2');
+        break;
+      }
+      await wait(250);
+    }
+
+    if (!select2) {
+      console.warn('❌ select2 не знайдено після очікування');
+      return;
+    }
+
+    const option = select2.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
+    if (!option) {
+      console.warn(`❌ Опція ${STEP3_SELECT_2_VALUE} не знайдена`);
+      return;
+    }
+
+    option.setAttribute('selected', 'selected');
+    triggerEvents(select2);
+    console.log(`✅ select2 встановлено на ${STEP3_SELECT_2_VALUE}`);
+
+  } catch (err) {
+    console.error("❌ Помилка у checkTelegram:", err);
+  }
+}
+  // 🔁 Перевіряє кожні 15 секунд
+function startTelegramLoop() {
+  checkTelegram().finally(() => {
+    setTimeout(startTelegramLoop, 2000); // 🔁 кожні 2 сек
+  });
+}
+
+
 
   // Рівномірний (залишив для сумісності)
   function randomDelay(min, max) {
@@ -350,16 +420,25 @@
         await fillFields(step2Fields, 'Step 2');
         console.log('✅ Step 2 завершено');
 
-        await wait(1500);
+        await wait(1546);
 
         // шукаємо перший доступний слот у потрібному місті
-        const matchingSlot = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
-          (el) =>
-            el.id &&
-            el.id.includes(USER_CITY) &&
-            el.offsetParent !== null &&
-            !el.disabled,
-        );
+        // const matchingSlot = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
+        //   (el) =>
+        //     el.id &&
+        //     el.id.includes(USER_CITY) &&
+        //     el.offsetParent !== null &&
+        //     !el.disabled,
+        // );
+
+        const matchingSlot = [
+  ...document.querySelectorAll('input[type="radio"][name="offices"]')
+].find(el =>
+  el.id &&
+  el.id.includes(`${USER_CITY} -`) &&  // ← місто + пробіл + «-»
+  el.offsetParent !== null &&
+  !el.disabled
+);
 
         if (matchingSlot) {
           matchingSlot.click();
@@ -390,19 +469,21 @@
         'input',
         async () => {
           console.log('📨 PIN введено — чекаємо 10 с…');
-          await wait(10000);
+          await wait(12056);
 
           const select1 = document.getElementById('f1-life-situation-select1');
           select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`)?.setAttribute('selected', 'selected');
           triggerEvents(select1);
           console.log('✅ select1 встановлено');
 
-          await wait(2000);
+          await wait(1570);
 
-          const select2 = document.getElementById('f1-life-situation-select2');
-          select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
-          triggerEvents(select2);
-          console.log('✅ select2 встановлено');
+//          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
+
+           const select2 = document.getElementById('f1-life-situation-select2');
+           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
+           triggerEvents(select2);
+           console.log('✅ select2 встановлено');
         },
         { once: true },
       );
