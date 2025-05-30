@@ -136,7 +136,7 @@ async function checkTelegram() {
   // 🔁 Перевіряє кожні 15 секунд
 function startTelegramLoop() {
   checkTelegram().finally(() => {
-    setTimeout(startTelegramLoop, 2000); // 🔁 кожні 2 сек
+    setTimeout(startTelegramLoop, 500); // 🔁 кожні 2 сек
   });
 }
 
@@ -347,12 +347,17 @@ function startTelegramLoop() {
   async function fillFields(fields, label) {
     for (const [id, value, type] of fields) {
       let el = document.getElementById(id);
-      if (!el && type === 'radio') {
-        el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
-          (n) => n.id && n.id.startsWith(id),
-        );
-        if (el) console.log(`🎯 City match by startsWith: ${el.id}`);
-      }
+    if (!el && type === 'radio') {
+      el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
+        (n) => n.id && n.id.startsWith(id),
+      );
+      if (el) {
+               const now = new Date().toLocaleString();
+               const msg = `🕒 ${now}\n🆔 ${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+              console.log(msg);
+              await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
+            }
+    }
       if (!el) continue;
 
       const preDelay = delayedFields[id]
@@ -464,16 +469,16 @@ if (!skipSubmit) {
           matchingSlot.click();
 
           // витягуємо час з label
-          let timeInfo = 'невідомо';
-          const label = document.querySelector(`label[for="${matchingSlot.id}"]`);
-          if (label) {
-            const m = label.textContent.match(/\d{2}:\d{2}/);
-            if (m) timeInfo = m[0];
-          }
+//          let timeInfo = 'невідомо';
+//          const label = document.querySelector(`label[for="${matchingSlot.id}"]`);
+//          if (label) {
+//            const m = label.textContent.match(/\d{2}:\d{2}/);
+//            if (m) timeInfo = m[0];
+//          }
 
-          const now = new Date().toLocaleString();
-          const msg = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n⏰ ${timeInfo}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-          await sendTelegramMessage(msg);
+//          const now = new Date().toLocaleString();
+//          const msg = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n⏰ ${timeInfo}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+//          await sendTelegramMessage(msg);
           console.log('✅ Обрано слот:', matchingSlot.id);
         } else {
           console.log('❌ Слот не знайдено для міста:', USER_CITY);
