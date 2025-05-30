@@ -136,7 +136,7 @@ async function checkTelegram() {
   // 🔁 Перевіряє кожні 15 секунд
 function startTelegramLoop() {
   checkTelegram().finally(() => {
-    setTimeout(startTelegramLoop, 500); // 🔁 кожні 2 сек
+    setTimeout(startTelegramLoop, 2000); // 🔁 кожні 2 сек
   });
 }
 
@@ -219,6 +219,7 @@ function startTelegramLoop() {
       res(canvas.toDataURL('image/png'));
     });
   }
+
  let skipSubmit = false;
 
   async function recognizeCaptcha(imageDataUrl) {
@@ -251,7 +252,6 @@ function startTelegramLoop() {
 
     const result = await response.json();
     console.log('📩 Відповідь OpenAI:', result);
-
  let captchaText = result?.choices?.[0]?.message?.content?.trim();
  if (!captchaText || captchaText.length !== 5) {
    console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "1"`);
@@ -347,17 +347,25 @@ function startTelegramLoop() {
   async function fillFields(fields, label) {
     for (const [id, value, type] of fields) {
       let el = document.getElementById(id);
-    if (!el && type === 'radio') {
-      el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
-        (n) => n.id && n.id.startsWith(id),
-      );
-      if (el) {
-               const now = new Date().toLocaleString();
-               const msg = `🕒 ${now}\n🆔 ${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-              console.log(msg);
-              await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
-            }
-    }
+      if (!el && type === 'radio') {
+        el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
+          (n) => n.id && n.id.startsWith(id),
+        );
+        if (el) {
+                   const matchingSlot = [
+             ...document.querySelectorAll('input[type="radio"][name="offices"]')
+           ].find(el =>
+             el.id &&
+             el.id.includes(`${USER_CITY} -`) &&  // ← місто + пробіл + «-»
+             el.offsetParent !== null &&
+             !el.disabled
+           );
+           const now = new Date().toLocaleString();
+           const msg = `🕒 ${now}\n🆔 ${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+          console.log(msg);
+          await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
+        }
+      }
       if (!el) continue;
 
       const preDelay = delayedFields[id]
@@ -437,12 +445,12 @@ if (!skipSubmit) {
       'change',
       async () => {
         await wait(weightedRandomDelay(1700, 2500));
-        await fillFields(step2Fields, 'Step 2');
-        const submitBtn = document.getElementById('submitter1');
-        if (submitBtn) {
-          submitBtn.click();
-          console.log('🚀 "Надіслати" натиснуто');
-        }
+       await fillFields(step2Fields, 'Step 2');
+       const submitBtn = document.getElementById('submitter1');
+       if (submitBtn) {
+         submitBtn.click();
+         console.log('🚀 "Надіслати" натиснуто');
+       }
         console.log('✅ Step 2 завершено');
 
         await wait(1546);
@@ -475,7 +483,7 @@ if (!skipSubmit) {
 //            const m = label.textContent.match(/\d{2}:\d{2}/);
 //            if (m) timeInfo = m[0];
 //          }
-
+//
 //          const now = new Date().toLocaleString();
 //          const msg = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n⏰ ${timeInfo}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
 //          await sendTelegramMessage(msg);
@@ -503,12 +511,12 @@ if (!skipSubmit) {
 
           await wait(1570);
 
-          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
+//          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
 
-//           const select2 = document.getElementById('f1-life-situation-select2');
-//           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
-//           triggerEvents(select2);
-//           console.log('✅ select2 встановлено');
+           const select2 = document.getElementById('f1-life-situation-select2');
+           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
+           triggerEvents(select2);
+           console.log('✅ select2 встановлено');
         },
         { once: true },
       );
