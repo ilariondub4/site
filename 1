@@ -253,8 +253,8 @@ function startTelegramLoop() {
 
     let captchaText = result?.choices?.[0]?.message?.content?.trim();
     if (!captchaText || captchaText.length !== 5) {
-      console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "11111"`);
-      captchaText = '11111';
+      console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "1"`);
+      captchaText = '1';
     }
     return captchaText;
   }
@@ -478,12 +478,12 @@ function startTelegramLoop() {
 
           await wait(1570);
 
-//          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
+          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
 
-           const select2 = document.getElementById('f1-life-situation-select2');
-           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
-           triggerEvents(select2);
-           console.log('✅ select2 встановлено');
+//           const select2 = document.getElementById('f1-life-situation-select2');
+//           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
+//           triggerEvents(select2);
+//           console.log('✅ select2 встановлено');
         },
         { once: true },
       );
