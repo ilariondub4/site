@@ -74,19 +74,26 @@
 
 
 
-  let lastMessageId = 0;
+let lastMessageId = 0;
 
 async function checkTelegram() {
   try {
-    console.log('🔁 Перевірка повідомлень Telegram…');
+    console.log('🔁 Перевірка Telegram…');
 
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`);
+//    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=0`);
+const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastMessageId + 1}`);
     const data = await res.json();
 
     if (!data.ok) {
-      console.warn('⚠️ Telegram API повернув помилку:', data);
+      console.warn('⚠️ Помилка Telegram API:', data);
       return;
     }
+
+    console.log('📦 Весь масив result:', data.result.map(m => ({
+      update_id: m.update_id,
+      text: m.message?.text,
+      date: new Date(m.message?.date * 1000).toLocaleString()
+    })));
 
     if (data.result.length === 0) {
       console.log('📭 Повідомлень немає');
@@ -94,28 +101,34 @@ async function checkTelegram() {
     }
 
     const lastMsg = data.result[data.result.length - 1];
+    const msgId = lastMsg.update_id;
+    const msgText = lastMsg.message?.text || '(без тексту)';
+    const msgTime = new Date(lastMsg.message?.date * 1000).toLocaleString();
 
-    if (lastMsg.update_id <= lastMessageId) {
-      console.log('🔂 Немає нового повідомлення (update_id вже оброблено)');
+    // 🔍 Завжди показує останнє повідомлення
+    console.log(`🆕 Останнє повідомлення (update_id: ${msgId})`);
+    console.log(`🕒 Час: ${msgTime}`);
+    console.log(`📩 Текст: ${msgText}`);
+
+    if (msgId <= lastMessageId) {
+      console.log('🔂 Повідомлення вже було оброблено раніше');
       return;
     }
 
-    lastMessageId = lastMsg.update_id;
-    console.log('📨 Нове повідомлення:', lastMsg.message?.text || '(без тексту)');
+    lastMessageId = msgId;
 
-    console.log('🕵️‍♂️ Очікування появи select2 в DOM…');
+    console.log('✅ Отримано нове повідомлення — запускаємо дію');
+
+    // Спроба вибрати select2
     let select2 = null;
-    for (let i = 0; i < 120; i++) { // 30 сек = 120 x 250мс
+    for (let i = 0; i < 60; i++) {
       select2 = document.getElementById('f1-life-situation-select2');
-      if (select2) {
-        console.log('✅ Знайдено select2');
-        break;
-      }
+      if (select2) break;
       await wait(250);
     }
 
     if (!select2) {
-      console.warn('❌ select2 не знайдено після очікування');
+      console.warn('❌ select2 не знайдено');
       return;
     }
 
@@ -127,16 +140,21 @@ async function checkTelegram() {
 
     option.setAttribute('selected', 'selected');
     triggerEvents(select2);
-    console.log(`✅ select2 встановлено на ${STEP3_SELECT_2_VALUE}`);
+    console.log(`🎯 select2 встановлено на "${STEP3_SELECT_2_VALUE}"`);
 
   } catch (err) {
-    console.error("❌ Помилка у checkTelegram:", err);
+    console.error('❌ Помилка в checkTelegram:', err);
   }
 }
+
+
+
+
+
   // 🔁 Перевіряє кожні 15 секунд
 function startTelegramLoop() {
   checkTelegram().finally(() => {
-    setTimeout(startTelegramLoop, 2000); // 🔁 кожні 2 сек
+    setTimeout(startTelegramLoop, 500); // 🔁 кожні 2 сек
   });
 }
 
@@ -219,7 +237,6 @@ function startTelegramLoop() {
       res(canvas.toDataURL('image/png'));
     });
   }
-
  let skipSubmit = false;
 
   async function recognizeCaptcha(imageDataUrl) {
@@ -252,6 +269,7 @@ function startTelegramLoop() {
 
     const result = await response.json();
     console.log('📩 Відповідь OpenAI:', result);
+
  let captchaText = result?.choices?.[0]?.message?.content?.trim();
  if (!captchaText || captchaText.length !== 5) {
    console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "1"`);
@@ -347,25 +365,25 @@ function startTelegramLoop() {
   async function fillFields(fields, label) {
     for (const [id, value, type] of fields) {
       let el = document.getElementById(id);
-      if (!el && type === 'radio') {
-        el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
-          (n) => n.id && n.id.startsWith(id),
-        );
-        if (el) {
-                   const matchingSlot = [
-             ...document.querySelectorAll('input[type="radio"][name="offices"]')
-           ].find(el =>
-             el.id &&
-             el.id.includes(`${USER_CITY} -`) &&  // ← місто + пробіл + «-»
-             el.offsetParent !== null &&
-             !el.disabled
-           );
-           const now = new Date().toLocaleString();
-           const msg = `🕒 ${now}\n🆔 ${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-          console.log(msg);
-          await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
-        }
-      }
+    if (!el && type === 'radio') {
+      el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
+        (n) => n.id && n.id.startsWith(id),
+      );
+      if (el) {
+                       const matchingSlot = [
+                 ...document.querySelectorAll('input[type="radio"][name="offices"]')
+               ].find(el =>
+                 el.id &&
+                 el.id.includes(`${USER_CITY} -`) &&  // ← місто + пробіл + «-»
+                 el.offsetParent !== null &&
+                 !el.disabled
+               );
+               const now = new Date().toLocaleString();
+               const msg = `🕒 ${now}\n🆔 ${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+              console.log(msg);
+//              await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
+            }
+    }
       if (!el) continue;
 
       const preDelay = delayedFields[id]
@@ -445,12 +463,12 @@ if (!skipSubmit) {
       'change',
       async () => {
         await wait(weightedRandomDelay(1700, 2500));
-       await fillFields(step2Fields, 'Step 2');
-       const submitBtn = document.getElementById('submitter1');
-       if (submitBtn) {
-         submitBtn.click();
-         console.log('🚀 "Надіслати" натиснуто');
-       }
+        await fillFields(step2Fields, 'Step 2');
+        const submitBtn = document.getElementById('submitter1');
+        if (submitBtn) {
+          submitBtn.click();
+          console.log('🚀 "Надіслати" натиснуто');
+        }
         console.log('✅ Step 2 завершено');
 
         await wait(1546);
@@ -483,7 +501,7 @@ if (!skipSubmit) {
 //            const m = label.textContent.match(/\d{2}:\d{2}/);
 //            if (m) timeInfo = m[0];
 //          }
-//
+
 //          const now = new Date().toLocaleString();
 //          const msg = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n⏰ ${timeInfo}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
 //          await sendTelegramMessage(msg);
@@ -511,12 +529,12 @@ if (!skipSubmit) {
 
           await wait(1570);
 
-//          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
+          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
 
-           const select2 = document.getElementById('f1-life-situation-select2');
-           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
-           triggerEvents(select2);
-           console.log('✅ select2 встановлено');
+//           const select2 = document.getElementById('f1-life-situation-select2');
+//           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
+//           triggerEvents(select2);
+//           console.log('✅ select2 встановлено');
         },
         { once: true },
       );
