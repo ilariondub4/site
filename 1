@@ -219,6 +219,7 @@ function startTelegramLoop() {
       res(canvas.toDataURL('image/png'));
     });
   }
+ let skipSubmit = false;
 
   async function recognizeCaptcha(imageDataUrl) {
     console.log('🔍 Відправка капчі в OpenAI…');
@@ -251,11 +252,14 @@ function startTelegramLoop() {
     const result = await response.json();
     console.log('📩 Відповідь OpenAI:', result);
 
-    let captchaText = result?.choices?.[0]?.message?.content?.trim();
-    if (!captchaText || captchaText.length !== 5) {
-      console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "1"`);
-      captchaText = '1';
-    }
+ let captchaText = result?.choices?.[0]?.message?.content?.trim();
+ if (!captchaText || captchaText.length !== 5) {
+   console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "1"`);
+   captchaText = '1';
+   skipSubmit = true; // 🚫 НЕ нажимати "Надіслати"
+ } else {
+   skipSubmit = false; // ✅ AI дав правильну відповідь
+ }
     return captchaText;
   }
 
@@ -326,7 +330,7 @@ function startTelegramLoop() {
     ],
     ['s41-delivery-phone-captcha', USER_PHONE, 'text'],
     ['email0', USER_EMAIL, 'text'],
-    ['loadSecondFormButton', (el) => el.click(), 'custom'],
+//    ['loadSecondFormButton', (el) => el.click(), 'custom'],
   ];
 
   const step2Fields = [
@@ -403,9 +407,20 @@ function startTelegramLoop() {
     // 1️⃣ CAPTCHA
     await solveCaptcha();
 
+
     // 2️⃣ Step 1
     await fillFields(step1Fields, 'Step 1');
-
+if (!skipSubmit) {
+  const btn = document.getElementById('loadSecondFormButton');
+  if (btn) {
+    btn.click();
+    console.log('🚀 "loadSecondFormButton" натиснуто');
+  } else {
+    console.warn('❌ Кнопка loadSecondFormButton не знайдена');
+  }
+} else {
+  console.warn('🚫 Капча невірна. Кнопка не натиснута');
+}
     // 3️⃣ Чекаємо селект міст
     const triggerStep2Button = await waitForElement('f1-life-situation-select2');
     if (!triggerStep2Button) {
@@ -418,6 +433,11 @@ function startTelegramLoop() {
       async () => {
         await wait(weightedRandomDelay(1700, 2500));
         await fillFields(step2Fields, 'Step 2');
+        const submitBtn = document.getElementById('submitter1');
+        if (submitBtn) {
+          submitBtn.click();
+          console.log('🚀 "Надіслати" натиснуто');
+        }
         console.log('✅ Step 2 завершено');
 
         await wait(1546);
