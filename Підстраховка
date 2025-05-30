@@ -25,7 +25,7 @@
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
   const STEP3_SELECT_1_VALUE = '216';
-  const STEP3_SELECT_2_VALUE = '245';
+  const STEP3_SELECT_2_VALUE = '226';
   const TELEGRAM_BOT_TOKEN =
     '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
   const TELEGRAM_CHAT_ID = '814270232A';
