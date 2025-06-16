@@ -434,7 +434,15 @@ function startTelegramLoop() {
   (async () => {
     console.log('🚀 Старт автозаповнення');
     await wait(weightedRandomDelay(800, 1500));
-
+  // 🔘 Натискання loadSecondFormButton одразу на старті
+const btn = await waitForElement('langSK');
+if (btn) {
+  btn.click();
+  console.log('🚀 "loadSecondFormButton" натиснуто на старті');
+} else {
+  console.warn('❌ Кнопка loadSecondFormButton не знайдена навіть після очікування');
+}
+  await wait(2239); // даємо час після кліку
     // 1️⃣ CAPTCHA
     await solveCaptcha();
 
