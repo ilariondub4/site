@@ -521,8 +521,7 @@ if (matchingSlot) {
           console.warn('⚠️ PIN з буфера не схожий на код:', pin);
         }
         pinCodeEl.focus();
-        pinCodeEl.value = pin;
-        triggerEvents(pinCodeEl);
+        await typeValue(pinCodeEl, pin);
         console.log(`🔐 PIN з буфера вставлено: ${pin}`);
 
         const submitBtn = document.getElementById('loadMain');
