@@ -20,7 +20,7 @@
   const USER_NAME = 'Mykola';
   const USER_SURNAME = 'Dan';
   const USER_BIRTHDATE = '01.06.1998';
-  const USER_PHONE = '+421940083584';
+  const USER_PHONE = '+421944867978';
   const USER_EMAIL = 'martjonko71@gmail.com';
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
@@ -472,62 +472,87 @@ if (!skipSubmit) {
         //     !el.disabled,
         // );
 
-        const matchingSlot = [
+ const allAvailableSlots = [
   ...document.querySelectorAll('input[type="radio"][name="offices"]')
-].find(el =>
+].filter(el =>
   el.id &&
-  el.id.includes(`${USER_CITY} -`) &&  // ← місто + пробіл + «-»
+  el.id.includes(' -') &&
   el.offsetParent !== null &&
   !el.disabled
 );
 
-        if (matchingSlot) {
-          matchingSlot.click();
+const matchingSlot = allAvailableSlots.find(el =>
+  el.id.includes(`${USER_CITY} -`)
+);
 
-          // витягуємо час з label
-//          let timeInfo = 'невідомо';
-//          const label = document.querySelector(`label[for="${matchingSlot.id}"]`);
-//          if (label) {
-//            const m = label.textContent.match(/\d{2}:\d{2}/);
-//            if (m) timeInfo = m[0];
-//          }
-//
-//          const now = new Date().toLocaleString();
-//          const msg = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n⏰ ${timeInfo}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-//          await sendTelegramMessage(msg);
-          console.log('✅ Обрано слот:', matchingSlot.id);
-        } else {
-          console.log('❌ Слот не знайдено для міста:', USER_CITY);
-        }
+if (matchingSlot) {
+  matchingSlot.click();
+  console.log('✅ Обрано слот:', matchingSlot.id);
+
+  const now = new Date().toLocaleString();
+  const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+  await sendTelegramMessage(msg);
+} else if (allAvailableSlots.length > 0) {
+  const now = new Date().toLocaleString();
+  const msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}`;
+  await sendTelegramMessage(msg);
+
+  const reloadIn = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
+  console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
+  setTimeout(() => location.reload(), reloadIn);
+} else {
+  console.log('❌ Жодного доступного терміну не знайдено');
+  const reloadIn = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
+  console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
+  setTimeout(() => location.reload(), reloadIn);
+}
       },
       { once: true },
     );
 
     // 4️⃣ PIN-код → довантажуємо selects
-    const pinCodeEl = await waitForElement('pin-code');
+     const pinCodeEl = await waitForElement('pin-code');
     if (pinCodeEl) {
-      pinCodeEl.addEventListener(
-        'input',
-        async () => {
-          console.log('📨 PIN введено — чекаємо 10 с…');
-          await wait(12056);
+      await wait(7500); // ⏱ затримка після появи поля
+      try {
+        const clipboard = await navigator.clipboard.readText();
+        const pin = clipboard.trim();
+        if (!/^\d{4,8}$/.test(pin)) {
+          console.warn('⚠️ PIN з буфера не схожий на код:', pin);
+        }
+        pinCodeEl.focus();
+        pinCodeEl.value = pin;
+        triggerEvents(pinCodeEl);
+        console.log(`🔐 PIN з буфера вставлено: ${pin}`);
 
-          const select1 = document.getElementById('f1-life-situation-select1');
-          select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`)?.setAttribute('selected', 'selected');
+        const submitBtn = document.getElementById('loadMain');
+        if (submitBtn) {
+          submitBtn.click();
+          console.log('🚀 "Odoslať" натиснуто');
+        }
+
+        await wait(2300); // після надсилання PIN
+
+        const select1 = document.getElementById('f1-life-situation-select1');
+        const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
+        if (option1) {
+          option1.setAttribute('selected', 'selected');
           triggerEvents(select1);
           console.log('✅ select1 встановлено');
-
+        }
           await wait(1570);
 
-//          startTelegramLoop(); // 🔁 Старт перевірки повідомлень
+        const select2 = document.getElementById('f1-life-situation-select2');
+        const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
+        if (option2) {
+          option2.setAttribute('selected', 'selected');
+          triggerEvents(select2);
+          console.log('✅ select2 встановлено');
+        }
 
-           const select2 = document.getElementById('f1-life-situation-select2');
-           select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`)?.setAttribute('selected', 'selected');
-           triggerEvents(select2);
-           console.log('✅ select2 встановлено');
-        },
-        { once: true },
-      );
+      } catch (err) {
+        console.error('❌ Помилка з PIN-кодом:', err);
+      }
     }
 
     console.log('📝 Очікування вибору міста…');
