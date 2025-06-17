@@ -540,6 +540,7 @@ if (matchingSlot) {
           triggerEvents(select1);
           console.log('✅ select1 встановлено');
         }
+          await wait(1570);
 
         const select2 = document.getElementById('f1-life-situation-select2');
         const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
