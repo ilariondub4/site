@@ -114,6 +114,8 @@ const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUp
       console.log('🔂 Повідомлення вже було оброблено раніше');
       return;
     }
+    
+    await wait(2253); // ⏱ мінімальна затримка, щоб інші пристрої встигли
 
     lastMessageId = msgId;
 
@@ -502,17 +504,7 @@ if (!skipSubmit) {
         if (matchingSlot) {
           matchingSlot.click();
 
-          // витягуємо час з label
-//          let timeInfo = 'невідомо';
-//          const label = document.querySelector(`label[for="${matchingSlot.id}"]`);
-//          if (label) {
-//            const m = label.textContent.match(/\d{2}:\d{2}/);
-//            if (m) timeInfo = m[0];
-//          }
 
-//          const now = new Date().toLocaleString();
-//          const msg = `🕒 ${now}\n📍 ${USER_CITY}\n🆔 ${matchingSlot.id}\n⏰ ${timeInfo}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-//          await sendTelegramMessage(msg);
           console.log('✅ Обрано слот:', matchingSlot.id);
         } else {
           console.log('❌ Слот не знайдено для міста:', USER_CITY);
