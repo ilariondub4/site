@@ -492,17 +492,17 @@ if (matchingSlot) {
   const now = new Date().toLocaleString();
   const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
   await sendTelegramMessage(msg);
-} else if (allAvailableSlots.length > 0) {
-  const now = new Date().toLocaleString();
-  const msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}`;
-  await sendTelegramMessage(msg);
-
-  const reloadIn = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
-  console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
-  setTimeout(() => location.reload(), reloadIn);
 } else {
-  console.log('❌ Жодного доступного терміну не знайдено');
-  const reloadIn = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
+  const now = new Date().toLocaleString();
+
+  if (allAvailableSlots.length > 0) {
+    const msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}`;
+    await sendTelegramMessage(msg);
+  } else {
+    console.log('❌ Жодного доступного терміну не знайдено');
+  }
+
+  const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
   console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
   setTimeout(() => location.reload(), reloadIn);
 }
