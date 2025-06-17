@@ -20,7 +20,7 @@
   const USER_NAME = 'Mykola';
   const USER_SURNAME = 'Dan';
   const USER_BIRTHDATE = '01.06.1998';
-  const USER_PHONE = '+421940083584';
+  const USER_PHONE = '+421904164965';
   const USER_EMAIL = 'martjonko71@gmail.com';
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
@@ -481,14 +481,17 @@ if (!skipSubmit) {
   !el.disabled
 );
 
-        if (matchingSlot) {
-          matchingSlot.click();
-
-
-          console.log('✅ Обрано слот:', matchingSlot.id);
-        } else {
-          console.log('❌ Слот не знайдено для міста:', USER_CITY);
-        }
+    if (matchingSlot) {
+  matchingSlot.click();
+  console.log('✅ Обрано слот:', matchingSlot.id);
+} else {
+  console.log('❌ Слот не знайдено для міста:', USER_CITY);
+  const reloadIn = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
+  console.log(`🔄 Перезавантаження сторінки через ${reloadIn / 1000} с`);
+  setTimeout(() => {
+    location.reload();
+  }, reloadIn);
+}
       },
       { once: true },
     );
