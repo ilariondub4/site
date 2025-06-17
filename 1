@@ -95,10 +95,16 @@ async function checkTelegram() {
 
     const lastMsg = data.result[data.result.length - 1];
 
-    if (lastMsg.update_id <= lastMessageId) {
-      console.log('🔂 Немає нового повідомлення (update_id вже оброблено)');
-      return;
-    }
+   if (lastMsg.update_id <= lastMessageId) {
+  console.log('🔂 Немає нового повідомлення (update_id вже оброблено)');
+  return;
+}
+
+// Затримка перед оновленням lastMessageId
+setTimeout(() => {
+  lastMessageId = lastMsg.update_id;
+  console.log(`⏱ lastMessageId оновлено на ${lastMessageId} через 1.5 сек`);
+}, 1500);
 
     lastMessageId = lastMsg.update_id;
     console.log('📨 Нове повідомлення:', lastMsg.message?.text || '(без тексту)');
