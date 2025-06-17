@@ -114,6 +114,8 @@ const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUp
       console.log('🔂 Повідомлення вже було оброблено раніше');
       return;
     }
+    
+    await wait(1500); // ⏱ мінімальна затримка, щоб інші пристрої встигли
 
     lastMessageId = msgId;
 
