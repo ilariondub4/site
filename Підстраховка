@@ -80,8 +80,7 @@ async function checkTelegram() {
   try {
     console.log('🔁 Перевірка Telegram…');
 
-//    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=0`);
-const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastMessageId + 1}`);
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastMessageId + 1}`);
     const data = await res.json();
 
     if (!data.ok) {
@@ -89,60 +88,41 @@ const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUp
       return;
     }
 
-    console.log('📦 Весь масив result:', data.result.map(m => ({
-      update_id: m.update_id,
-      text: m.message?.text,
-      date: new Date(m.message?.date * 1000).toLocaleString()
-    })));
-
-    if (data.result.length === 0) {
-      console.log('📭 Повідомлень немає');
+    const newMessages = data.result.filter(m => m.update_id > lastMessageId);
+    if (newMessages.length === 0) {
+      console.log('📭 Нових повідомлень немає');
       return;
     }
 
-    const lastMsg = data.result[data.result.length - 1];
-    const msgId = lastMsg.update_id;
-    const msgText = lastMsg.message?.text || '(без тексту)';
-    const msgTime = new Date(lastMsg.message?.date * 1000).toLocaleString();
+    for (const msg of newMessages) {
+      const msgId = msg.update_id;
+      const msgText = msg.message?.text || '(без тексту)';
+      const msgTime = new Date(msg.message?.date * 1000).toLocaleString();
 
-    // 🔍 Завжди показує останнє повідомлення
-    console.log(`🆕 Останнє повідомлення (update_id: ${msgId})`);
-    console.log(`🕒 Час: ${msgTime}`);
-    console.log(`📩 Текст: ${msgText}`);
+      console.log(`🆕 Нове повідомлення: ${msgId}`);
+      console.log(`🕒 Час: ${msgTime}`);
+      console.log(`📩 Текст: ${msgText}`);
 
-    if (msgId <= lastMessageId) {
-      console.log('🔂 Повідомлення вже було оброблено раніше');
-      return;
+      lastMessageId = msgId; // оновлюємо одразу, щоб уникнути повторів
+
+      await wait(1500); // 🕓 невелика затримка, щоб інші пристрої встигли
+
+      // 🔘 Симуляція вибору select2
+      const select2 = document.getElementById('f1-life-situation-select2');
+      const option = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
+
+      if (!select2 || !option) {
+        console.warn('❌ select2 або опція не знайдені');
+        continue;
+      }
+
+      select2.focus();
+      await wait(300);
+      option.selected = true;
+      triggerEvents(select2);
+      select2.dispatchEvent(new Event('click', { bubbles: true }));
+      console.log(`🎯 select2 встановлено на "${STEP3_SELECT_2_VALUE}"`);
     }
-    
-    await wait(2253); // ⏱ мінімальна затримка, щоб інші пристрої встигли
-
-    lastMessageId = msgId;
-
-    console.log('✅ Отримано нове повідомлення — запускаємо дію');
-
-    // Спроба вибрати select2
-    let select2 = null;
-    for (let i = 0; i < 60; i++) {
-      select2 = document.getElementById('f1-life-situation-select2');
-      if (select2) break;
-      await wait(250);
-    }
-
-    if (!select2) {
-      console.warn('❌ select2 не знайдено');
-      return;
-    }
-
-    const option = select2.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
-    if (!option) {
-      console.warn(`❌ Опція ${STEP3_SELECT_2_VALUE} не знайдена`);
-      return;
-    }
-
-    option.setAttribute('selected', 'selected');
-    triggerEvents(select2);
-    console.log(`🎯 select2 встановлено на "${STEP3_SELECT_2_VALUE}"`);
 
   } catch (err) {
     console.error('❌ Помилка в checkTelegram:', err);
@@ -151,12 +131,10 @@ const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUp
 
 
 
-
-
   // 🔁 Перевіряє кожні 15 секунд
 function startTelegramLoop() {
   checkTelegram().finally(() => {
-    setTimeout(startTelegramLoop, 500); // 🔁 кожні 2 сек
+    setTimeout(startTelegramLoop, 1000); // 🔁 кожні 2 сек
   });
 }
 
