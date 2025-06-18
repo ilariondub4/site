@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Universal support
+// @name         Universal main
 // @namespace    Violentmonkey Scripts
 // @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant        none
@@ -24,8 +24,9 @@
   const USER_EMAIL = 'ivanikrakusinko1a1a11@gmail.com';
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
-  const STEP3_SELECT_1_VALUE = '216';
-  const STEP3_SELECT_2_VALUE = '226';
+  const STEP3_SELECT_1_VALUE = '216';   const STEP3_SELECT_2_VALUE = '226'; //PO
+  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '225'; //PU
+
   const TELEGRAM_BOT_TOKEN =
     '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
   const TELEGRAM_CHAT_ID = '814270232A';
