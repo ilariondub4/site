@@ -30,6 +30,7 @@
     '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
   const TELEGRAM_CHAT_ID = '814270232A';
 
+
   /* ------------------------------------------------------------------
      ⚙️  Налаштування «human-like» пауз
   ------------------------------------------------------------------ */
@@ -496,7 +497,7 @@ if (matchingSlot) {
   const now = new Date().toLocaleString();
 
   if (allAvailableSlots.length > 0) {
-    const msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}`;
+const msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
     await sendTelegramMessage(msg);
   } else {
     console.log('❌ Жодного доступного терміну не знайдено');
@@ -511,48 +512,66 @@ if (matchingSlot) {
     );
 
     // 4️⃣ PIN-код → довантажуємо selects
-     const pinCodeEl = await waitForElement('pin-code');
-    if (pinCodeEl) {
-      await wait(7500); // ⏱ затримка після появи поля
-      try {
-        const clipboard = await navigator.clipboard.readText();
-        const pin = clipboard.trim();
-        if (!/^\d{4,8}$/.test(pin)) {
-          console.warn('⚠️ PIN з буфера не схожий на код:', pin);
-        }
-        pinCodeEl.focus();
-        await typeValue(pinCodeEl, pin);
-        console.log(`🔐 PIN з буфера вставлено: ${pin}`);
+let odoslatClicked = false;
 
-        const submitBtn = document.getElementById('loadMain');
-        if (submitBtn) {
-          submitBtn.click();
-          console.log('🚀 "Odoslať" натиснуто');
-        }
+const loadSecondFormBtn = await waitForElement('loadSecondFormButton');
+if (loadSecondFormBtn) {
+  loadSecondFormBtn.addEventListener('click', () => {
+    odoslatClicked = true;
+  });
+}
 
-        await wait(2300); // після надсилання PIN
+async function waitForPINConditions() {
+  while (!odoslatClicked && skipSubmit) {
+    await wait(500); // чекати, поки або AI не помилиться, або ти не натиснеш кнопку
+  }
+}
 
-        const select1 = document.getElementById('f1-life-situation-select1');
-        const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
-        if (option1) {
-          option1.setAttribute('selected', 'selected');
-          triggerEvents(select1);
-          console.log('✅ select1 встановлено');
-        }
-          await wait(1570);
+await waitForPINConditions();
 
-        const select2 = document.getElementById('f1-life-situation-select2');
-        const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
-        if (option2) {
-          option2.setAttribute('selected', 'selected');
-          triggerEvents(select2);
-          console.log('✅ select2 встановлено');
-        }
-
-      } catch (err) {
-        console.error('❌ Помилка з PIN-кодом:', err);
-      }
+const pinCodeEl = await waitForElement('pin-code');
+if (pinCodeEl) {
+  await wait(7500);
+  try {
+    const clipboard = await navigator.clipboard.readText();
+    const pin = clipboard.trim();
+    if (!/^\d{4,8}$/.test(pin)) {
+      console.warn('⚠️ PIN з буфера не схожий на код:', pin);
     }
+    pinCodeEl.focus();
+    await typeValue(pinCodeEl, pin);
+    console.log(`🔐 PIN з буфера вставлено: ${pin}`);
+
+    const submitBtn = document.getElementById('loadMain');
+    if (submitBtn) {
+      submitBtn.click();
+      console.log('🚀 "Odoslať" натиснуто');
+    }
+
+    await wait(2300);
+
+    const select1 = document.getElementById('f1-life-situation-select1');
+    const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
+    if (option1) {
+      option1.setAttribute('selected', 'selected');
+      triggerEvents(select1);
+      console.log('✅ select1 встановлено');
+    }
+
+    await wait(1570);
+
+    const select2 = document.getElementById('f1-life-situation-select2');
+    const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
+    if (option2) {
+      option2.setAttribute('selected', 'selected');
+      triggerEvents(select2);
+      console.log('✅ select2 встановлено');
+    }
+
+  } catch (err) {
+    console.error('❌ Помилка з PIN-кодом:', err);
+  }
+}
 
     console.log('📝 Очікування вибору міста…');
   })();
