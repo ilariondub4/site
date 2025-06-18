@@ -249,8 +249,8 @@ function startTelegramLoop() {
             content: [
               {
                 type: 'text',
-                text: 'Що зображено на цій капчі? Напиши лише символи без пояснень. Це завжди малі англійські літери та цифри і відповідь завжди має 5 символів.',
-                //text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
+                //text: 'Що зображено на цій капчі? Напиши лише символи без пояснень. Це завжди малі англійські літери та цифри і відповідь завжди має 5 символів.',
+                text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
 
               },
               { type: 'image_url', image_url: { url: imageDataUrl } },
