@@ -24,8 +24,16 @@
   const USER_EMAIL = 'ivanikrakusinko1a1a11@gmail.com';
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
-  const STEP3_SELECT_1_VALUE = '216';
-  const STEP3_SELECT_2_VALUE = '226';
+
+  const STEP3_SELECT_1_VALUE = '216';   const STEP3_SELECT_2_VALUE = '226'; //Prechodny obnova
+  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '225'; //Prechodny udelenie
+  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '240'; //Prechodny zlucenie rodiny udelenie
+  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '241'; //Prechodny zlucenie rodiny obnova
+  //const STEP3_SELECT_1_VALUE = '218';  const STEP3_SELECT_2_VALUE = '224'; //Dlhodoby neobmedzeny
+  //const STEP3_SELECT_1_VALUE = '213';  const STEP3_SELECT_2_VALUE = '228'; //Vydaj dokladov
+  //const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '243'; //Utecenec udelenie
+  //const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '250'; //Utecenec vydaj
+
   const TELEGRAM_BOT_TOKEN =
     '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
   const TELEGRAM_CHAT_ID = '814270232A';
