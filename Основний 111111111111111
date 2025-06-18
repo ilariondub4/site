@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         PPіфааф
+// @name         Universal main
 // @namespace    Violentmonkey Scripts
 // @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant        none
