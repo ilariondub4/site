@@ -245,8 +245,8 @@ function startTelegramLoop() {
             content: [
               {
                 type: 'text',
-                text: 'Розпізнай капчу. Відповідь має містити лише 5 символів: [a-z, 0-9]. Без жодних пояснень чи додаткового тексту. Виведи лише капчу.'   
-                //text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
+                //text: 'Розпізнай капчу. Відповідь має містити лише 5 символів: [a-z, 0-9]. Без жодних пояснень чи додаткового тексту. Виведи лише капчу.'   
+                text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
 
 },
               { type: 'image_url', image_url: { url: imageDataUrl } },
