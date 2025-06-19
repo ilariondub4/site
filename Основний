@@ -477,7 +477,7 @@ setTimeout(async () => {
   } catch (err) {
     console.error('⚠️ Помилка при читанні буфера:', err);
   }
-}, 30000); // 30 000 мс = 30 сек
+}, 40000); // 40 000 мс = 40 сек
 
   await wait(2500); // даємо час з'явитися повідомленню про помилку
 const captchaError = [...document.querySelectorAll('span, div')]
