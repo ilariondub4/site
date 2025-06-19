@@ -15,6 +15,8 @@
   /* ------------------------------------------------------------------
      🔐 Користувацькі константи (заповніть під себе)
   ------------------------------------------------------------------ */
+const OPENAI_MODEL = 'gpt-4o';
+const OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUj';
   const OPENAI_API_KEY =
     'sk-proj-iRXte7QBw41n495PX9tsu2KXtJLlKRT_lzDPQD2MiP1Sbzi8KMrVeLvrvZNyUrh09GxLs609hkT3BlbkFJtgjY7dSuDleG5aAbPX-05_bYa7e1xDJtKX2UFRYuUIjgLjo7ZralAvfAu1dv_WKORfNRqxM68AA';
   const USER_NAME = 'Mykola';
@@ -235,18 +237,18 @@ function startTelegramLoop() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         'OpenAI-Beta': 'assistants=v1',
-        'OpenAI-Project': 'proj_NtHUbQd0hgmD2cIO6zb7VRUj',
+    'OpenAI-Project': OPENAI_PROJECT_ID,  
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+      model: OPENAI_MODEL,
         messages: [
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-            //text: 'Розпізнай капчу. Відповідь має містити лише 5 символів: [a-z, 0-9]. Без жодних пояснень чи додаткового тексту. Виведи лише капчу.'  
-            text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
+                //text: 'Розпізнай капчу. Відповідь має містити лише 5 символів: [a-z, 0-9]. Без жодних пояснень чи додаткового тексту. Виведи лише капчу.'   
+                text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
 
 },
               { type: 'image_url', image_url: { url: imageDataUrl } },
