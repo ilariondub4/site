@@ -454,7 +454,9 @@ async function recognizeCaptcha(imageDataUrl) {
     console.log('🚀 Старт автозаповнення');
 
 
-
+  // Очищення буфера обміну після вставлення
+await navigator.clipboard.writeText('');
+console.log('🧹 Буфер очищено після вставлення PIN');
 
 
     await wait(weightedRandomDelay(800, 1500));
@@ -567,9 +569,7 @@ if (matchingSlot) {
   const now = new Date().toLocaleString();
   const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
   await sendTelegramMessage(msg);
-  // Очищення буфера обміну після вставлення
-await navigator.clipboard.writeText('');
-console.log('🧹 Буфер очищено після вставлення PIN');
+
 } else {
   const now = new Date().toLocaleString();
 
