@@ -464,7 +464,7 @@ if (btn) {
   btn.click();
   console.log('🚀 "loadSecondFormButton" натиснуто');
 
-// 🕒 Через 30 сек перевірка буфера обміну
+// 🕒 Через 60 сек перевірка буфера обміну
 setTimeout(async () => {
   try {
     const clipboard = await navigator.clipboard.readText();
@@ -477,7 +477,7 @@ setTimeout(async () => {
   } catch (err) {
     console.error('⚠️ Помилка при читанні буфера:', err);
   }
-}, 40000); // 40 000 мс = 40 сек
+}, 60000); // 60 000 мс = 60 сек
 
   await wait(2500); // даємо час з'явитися повідомленню про помилку
 const captchaError = [...document.querySelectorAll('span, div')]
