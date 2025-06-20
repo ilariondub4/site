@@ -22,8 +22,8 @@ const OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUj';
   const USER_NAME = 'Tetiana';
   const USER_SURNAME = 'Alestratenko';
   const USER_BIRTHDATE = '16.05.1967';
-  const USER_PHONE = '+421917082596';
-  const USER_EMAIL = 'ivanbojko21802@gmail.com';
+const USER_PHONE = '+421940083584';
+  const USER_EMAIL = 'ivanikrakusinko1a1a11@gmail.com';
   const USER_CITY = 'OCP Michalovce'; // назва міста без дати
   const USER_PASSPORT = 'T';
 
