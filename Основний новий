@@ -24,7 +24,7 @@
 
   const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
   const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-iRXte7QBw41n495PX9tsu2KXtJLlKRT_lzDPQD2MiP1Sbzi8KMrVeLvrvZNyUrh09GxLs609hkT3BlbkFJtgjY7dSuDleG5aAbPX-05_bYa7e1xDJtKX2UFRYuUIjgLjo7ZralAvfAu1dv_WKORfNRqxM68AA';
-  const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || '';
+  const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_NtHUbQd0hgmD2cIO6zb7VRUj';
   const TELEGRAM_BOT_TOKEN = localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
   const TELEGRAM_CHAT_ID = localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A';
   const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
