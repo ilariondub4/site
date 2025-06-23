@@ -1,44 +1,108 @@
 // ==UserScript==
-// @name         Universal main
+// @name         3113313131 main
 // @namespace    Violentmonkey Scripts
 // @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant        none
-// @version      1.3
+// @version      1.5
 // @author       -
-// @description  Автоматичне заповнення форми MINV з логами, розпізнаванням CAPTCHA через OpenAI та вибором міста за startsWith — імітація «людської» поведінки (гаусові затримки, випадкові довгі паузи, перепочинки). Початковий функціонал повністю збережено.
+// @description  Автоматичне заповнення форми MINV з Telegram, CAPTCHA, GPT-4o, DeepSeek, фіксованими ключами та UI для редагування.
 // @run-at       document-end
 // ==/UserScript==
 
 (function () {
   'use strict';
 
-  /* ------------------------------------------------------------------
-     🔐 Користувацькі константи (заповніть під себе)
-  ------------------------------------------------------------------ */
-const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4',];
-const OPENAI_PROJECT_ID = 'proj_i1jauovjNFo9CAZCUX8JmTwx';
-  const OPENAI_API_KEY =
-    'sk-proj-mlwjkCoqKNb3_XNeVpJaoyXv4a7nQqwa8g7ErEKGrQT_ZeTzUKSQQ-NgORGaH7QHLhyTaUqTjbT3BlbkFJWrM46Ho1Je3tFL0_86ZfQmsqeKAn9iO4ZVg44xO8Io8f4NMgyhMTu-BQOz6spWoYPZu1mvbV4AA';
-  const USER_NAME = 'Larysa';
-  const USER_SURNAME = 'Shevchuk';
-  const USER_BIRTHDATE = '30.03.1988';
-const USER_PHONE = '+421940792910';
-  const USER_EMAIL = 'ivanikrakusinko1a1a14@gmail.com';
-  const USER_CITY = 'OCP Ružomberok'; // назва міста без дати
+  const USER_NAME = localStorage.getItem('USER_NAME') || 'Larysa';
+  const USER_SURNAME = localStorage.getItem('USER_SURNAME') || 'Shevchuk';
+  const USER_BIRTHDATE = localStorage.getItem('USER_BIRTHDATE') || '30.03.1988';
+  const USER_PHONE = localStorage.getItem('USER_PHONE') || '+421940792910';
+  const USER_EMAIL = localStorage.getItem('USER_EMAIL') || 'ivanikrakusinko1a1a14@gmail.com';
+  const USER_CITY = localStorage.getItem('USER_CITY') || 'OCP Ružomberok';
   const USER_PASSPORT = 'T';
+  const STEP3_SELECT_1_VALUE = localStorage.getItem('STEP3_SELECT_1_VALUE') || '218';
+  const STEP3_SELECT_2_VALUE = localStorage.getItem('STEP3_SELECT_2_VALUE') || '224';
 
-  //const STEP3_SELECT_1_VALUE = '216';   const STEP3_SELECT_2_VALUE = '226'; //Prechodny obnova
-  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '225'; //Prechodny udelenie
-  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '240'; //Prechodny zlucenie rodiny udelenie
-  //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '241'; //Prechodny zlucenie rodiny obnova
-  //const STEP3_SELECT_1_VALUE = '218';  const STEP3_SELECT_2_VALUE = '224'; //Dlhodoby neobmedzeny
-  //const STEP3_SELECT_1_VALUE = '213';  const STEP3_SELECT_2_VALUE = '228'; //Vydaj dokladov
-  //const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '243'; //Utecenec udelenie
-  const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '250'; //Utecenec vydaj
+  const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
+  const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || '';
+  const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || '';
+  const TELEGRAM_BOT_TOKEN = localStorage.getItem('TELEGRAM_BOT_TOKEN') || '';
+  const TELEGRAM_CHAT_ID = localStorage.getItem('TELEGRAM_CHAT_ID') || '';
+  const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
-  const TELEGRAM_BOT_TOKEN =
-    '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
-  const TELEGRAM_CHAT_ID = '814270232A';
+  window.addEventListener('load', () => {
+    const btn = document.createElement('button');
+    btn.textContent = '⚙️ Налаштування';
+    btn.style = 'position:fixed;top:20px;right:20px;z-index:9999;padding:8px 12px;background:#333;color:white;border:none;border-radius:5px;cursor:pointer;';
+    btn.onclick = openSettingsModal;
+    document.body.appendChild(btn);
+  });
+
+  window.openSettingsModal = function () {
+    const html = `
+      <div id="settingsModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">
+        <div style="background:white;padding:20px;border-radius:8px;max-width:500px;width:100%;max-height:90vh;overflow:auto;">
+          <h2 style="margin-top:0;">⚙️ Налаштування</h2>
+          <label>👤 Ім’я: <input id="set_name" value="${USER_NAME}" /></label><br/><br/>
+          <label>👤 Прізвище: <input id="set_surname" value="${USER_SURNAME}" /></label><br/><br/>
+          <label>🎂 Дата нар.: <input id="set_birth" value="${USER_BIRTHDATE}" /></label><br/><br/>
+          <label>📞 Тел.: <input id="set_phone" value="${USER_PHONE}" /></label><br/><br/>
+          <label>📧 Email: <input id="set_email" value="${USER_EMAIL}" /></label><br/><br/>
+          <label>🟦 Місто:
+            <select id="set_city">
+              ${['Banská Bystrica','Bratislava','Dunajská Streda','Košice','Michalovce','Nitra','Nové Zámky','Prešov','Rimavská Sobota','Ružomberok','Trenčín','Trnava','Žilina'].map(city => `<option${USER_CITY === 'OCP ' + city ? ' selected' : ''}>OCP ${city}</option>`).join('')}
+            </select>
+          </label><br/><br/>
+          <label>📋 Тип:
+            <select id="set_type">
+              ${[
+                ['213', '228', 'Doklady / pasy – Žiadosť o vydanie dokladu o pobyte'],
+                ['242', '243', 'Dočasné útočisko – Registrácia dočasného útočiska'],
+                ['242', '250', 'Dočasné útočisko – Žiadosť o vydanie dokladu o pobyte'],
+                ['216', '225', 'Prechodný pobyt – Žiadosť o udelenie prechodného pobytu'],
+                ['216', '226', 'Prechodný pobyt – Žiadosť o obnovenie prechodného pobytu'],
+                ['216', '249', 'Prechodný pobyt – Podnikanie - udelenie'],
+                ['216', '240', 'Prechodný pobyt – Rodina - udelenie'],
+                ['216', '241', 'Prechodný pobyt – Rodina - obnova'],
+                ['216', '244', 'Prechodný pobyt – Zamestnanie - udelenie'],
+                ['216', '245', 'Prechodný pobyt – Zamestnanie - obnova'],
+                ['218', '224', 'Trvalý pobyt – neobmedzený čas'],
+                ['218', '223', 'Trvalý pobyt – на 5 rokov']
+              ].map(([v1, v2, label]) => `<option value="${v1}|${v2}"${STEP3_SELECT_1_VALUE === v1 && STEP3_SELECT_2_VALUE === v2 ? ' selected' : ''}>${label} (${v1} → ${v2})</option>`).join('')}
+            </select>
+          </label><br/><br/>
+          <label>🧠 OpenAI API: <input id="set_openai" value="${OPENAI_API_KEY}" /></label><br/><br/>
+          <label>🧠 OpenAI Project: <input id="set_openai_proj" value="${OPENAI_PROJECT_ID}" /></label><br/><br/>
+          <label>📬 TG Token: <input id="set_tg_token" value="${TELEGRAM_BOT_TOKEN}" /></label><br/><br/>
+          <label>📬 TG Chat ID: <input id="set_tg_chat" value="${TELEGRAM_CHAT_ID}" /></label><br/><br/>
+          <button onclick="saveSettings()">💾 Зберегти</button>
+          <button onclick="document.getElementById('settingsModal').remove()">❌ Закрити</button>
+        </div>
+      </div>
+    `;
+    const modal = document.createElement('div');
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+  }
+
+  window.saveSettings = function () {
+    localStorage.setItem('USER_NAME', document.getElementById('set_name').value);
+    localStorage.setItem('USER_SURNAME', document.getElementById('set_surname').value);
+    localStorage.setItem('USER_BIRTHDATE', document.getElementById('set_birth').value);
+    localStorage.setItem('USER_PHONE', document.getElementById('set_phone').value);
+    localStorage.setItem('USER_EMAIL', document.getElementById('set_email').value);
+    localStorage.setItem('USER_CITY', document.getElementById('set_city').value);
+
+    const [v1, v2] = document.getElementById('set_type').value.split('|');
+    localStorage.setItem('STEP3_SELECT_1_VALUE', v1);
+    localStorage.setItem('STEP3_SELECT_2_VALUE', v2);
+
+    localStorage.setItem('OPENAI_API_KEY', document.getElementById('set_openai').value);
+    localStorage.setItem('OPENAI_PROJECT_ID', document.getElementById('set_openai_proj').value);
+    localStorage.setItem('TELEGRAM_BOT_TOKEN', document.getElementById('set_tg_token').value);
+    localStorage.setItem('TELEGRAM_CHAT_ID', document.getElementById('set_tg_chat').value);
+    alert('✅ Збережено! Перезавантажте сторінку');
+  }
+
 
 
   /* ------------------------------------------------------------------
