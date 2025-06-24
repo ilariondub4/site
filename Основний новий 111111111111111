@@ -30,7 +30,7 @@
     const STEP3_SELECT_2_VALUE = localStorage.getItem('STEP3_SELECT_2_VALUE') || '243';
 
     const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
-    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-7oh1Zgb8SHJoFO7nXeZXpHfF-isuZOyBHLvJV88xGD1TKvQSW_8DQQ5HwO_gv8sRK1v7PU80vT3BlbkFJ20kJ8hlvm7DDim-90js6HfRAWw92evngeZpsuCQhke1Va4OOUrZIGLtohYxRpaEZ5FA_Xj7ygAA';
+    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-7oh1Zgb8SHJoFO7nXeZXpHfF-isuZOyBHLFvJV88xGD1TKvQSW_8DQQ5HwO_gv8sRK1v7PU80vT3BlbkFJ20kJ8hlvm7DDim-90js6HfRAWw92evngeZpsuCQhke1Va4OOUrZIGLtohYxRpaEZ5FA_Xj7ygAA';
     const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_WWWImdcpG5yV58xSokbj5nbm';
     const TELEGRAM_BOT_TOKEN = localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
     const TELEGRAM_CHAT_ID = localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A';
@@ -52,11 +52,6 @@
         }
         stopBtn.onclick = toggleScriptStop;
         document.body.appendChild(stopBtn);
-
-        // Start the main scenario if the script is not stopped
-        if (!isScriptStopped) {
-            runMainScenario();
-        }
     });
 
     window.openSettingsModal = function () {
@@ -111,7 +106,7 @@
         document.body.appendChild(modal);
     }
 
-    window.saveSettings = function () {
+  window.saveSettings = function () {
         localStorage.setItem('USER_NAME', document.getElementById('set_name').value);
         localStorage.setItem('USER_SURNAME', document.getElementById('set_surname').value);
         localStorage.setItem('USER_BIRTHDATE', document.getElementById('set_birth').value);
@@ -120,7 +115,7 @@
 
         // *** ОНОВЛЕНИЙ КОД ТУТ ***
         const selectedCities = Array.from(document.querySelectorAll('#set_cities_container .city-checkbox:checked'))
-                                       .map(checkbox => checkbox.value);
+                               .map(checkbox => checkbox.value);
         localStorage.setItem('USER_CITIES', JSON.stringify(selectedCities));
         localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс при збереженні нових міст
         // **********************
@@ -156,7 +151,7 @@
     }
 
     /* ------------------------------------------------------------------
-        ⚙️ Налаштування «human-like» пауз
+       ⚙️  Налаштування «human-like» пауз
     ------------------------------------------------------------------ */
     const config = {
         // між натисканнями клавіш
@@ -187,7 +182,7 @@
     };
 
     /* ------------------------------------------------------------------
-        🏗 Утиліти
+       🏗  Утиліти
     ------------------------------------------------------------------ */
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -291,7 +286,7 @@
     }
 
     /* ------------------------------------------------------------------
-        📖 Очікування елемента в DOM
+       📖  Очікування елемента в DOM
     ------------------------------------------------------------------ */
     function waitForElement(id) {
         return new Promise((resolve) => {
@@ -317,7 +312,7 @@
     }
 
     /* ------------------------------------------------------------------
-        ⌨️ Набір тексту «по-людськи»
+       ⌨️  Набір тексту «по-людськи»
     ------------------------------------------------------------------ */
     async function typeValue(el, value) {
         if (isScriptStopped) return;
@@ -338,7 +333,7 @@
     }
 
     /* ------------------------------------------------------------------
-        🖼 Розпізнавання CAPTCHA (GPT-4o Vision)
+       🖼  Розпізнавання CAPTCHA (GPT-4o Vision)
     ------------------------------------------------------------------ */
     async function imageToBase64(img) {
         return new Promise((res) => {
@@ -452,7 +447,7 @@
     }
 
     /* ------------------------------------------------------------------
-        🗒 Налаштування полів
+       🗒  Налаштування полів
     ------------------------------------------------------------------ */
     const delayedFields = {
         'residence-address-county-0': 2000,
@@ -505,7 +500,7 @@
     ];
 
     /* ------------------------------------------------------------------
-        🔄 Заповнення полів (human-like)
+       🔄  Заповнення полів (human-like)
     ------------------------------------------------------------------ */
     async function fillFields(fields, label) {
         if (isScriptStopped) return;
@@ -569,26 +564,8 @@
         }
     }
 
-    /**
-     * Handles the scenario where no slots are found or an error occurs,
-     * switching to the next city in the list and reloading the page.
-     */
-    async function handleNoSlotsFound() {
-        console.log('🔄 Не знайдено вільних слотів або сталася помилка. Перехід до наступного міста...');
-        currentCityIndex++;
-        if (currentCityIndex >= USER_CITIES.length) {
-            currentCityIndex = 0; // Повертаємося на початок списку
-            console.log('🏁 Пройдено всі міста. Починаємо спочатку.');
-            await sendTelegramMessage('🏁 Пройдено всі міста. Починаємо спочатку.');
-        }
-        localStorage.setItem('currentCityIndex', currentCityIndex.toString());
-        USER_CITY = USER_CITIES[currentCityIndex]; // Оновлюємо USER_CITY
-        await sendTelegramMessage(`🏙️ Переходимо до міста: ${USER_CITY}`);
-        location.reload(); // Перезавантажуємо сторінку для наступного міста
-    }
-
     /* ------------------------------------------------------------------
-        🚀 Основний сценарій
+       🚀  Основний сценарій
     ------------------------------------------------------------------ */
     async function runMainScenario() {
         if (isScriptStopped) {
@@ -598,9 +575,9 @@
 
         console.log(`🚀 Старт автозаповнення для міста: ${USER_CITY}`);
 
-        // Очищення буфера обміну після вставлення (або на початку, щоб уникнути залишків)
+        // Очищення буфера обміну після вставлення
         await navigator.clipboard.writeText('');
-        console.log('🧹 Буфер обміну очищено перед початком.');
+        console.log('🧹 Буфер очищено після вставлення PIN');
 
         await wait(weightedRandomDelay(800, 1500));
         // 🔘 Натискання langSK одразу на старті
@@ -615,42 +592,28 @@
 
             if (captchaError) {
                 console.warn('❌ Капча невірна. Перезавантаження...');
-                handleNoSlotsFound(); // Викликаємо логіку переходу до наступного міста
+                setTimeout(() => location.reload(), 3000); // даємо 3 сек і перезавантажуємо
                 return;
             }
         } else {
             console.warn('❌ Кнопка langSK не знайдена навіть після очікування');
         }
 
-        // 🕒 Через 30 секунд перевірка буфера обміну
-        // Цей таймер буде запущений після початкового заповнення форми
-        // і буде чекати на появу PIN-коду в буфері.
-        let clipboardCheckTimeoutId = null; // Зберігаємо ID таймера, щоб можна було його очистити
-
-        const startClipboardCheck = () => {
-            if (clipboardCheckTimeoutId) clearTimeout(clipboardCheckTimeoutId); // Очищаємо попередній таймер, якщо існує
-            clipboardCheckTimeoutId = setTimeout(async () => {
-                if (isScriptStopped) return;
-                try {
-                    const clipboard = await navigator.clipboard.readText();
-                    if (!clipboard.trim()) {
-                        console.warn('🕒 Через 30 сек буфер обміну порожній. Перезавантаження...');
-                        await sendTelegramMessage(`⚠️ Буфер обміну порожній після 30 секунд у місті ${USER_CITY}. Слотів, ймовірно, немає.`);
-                        handleNoSlotsFound(); // Викликаємо логіку переходу до наступного міста
-                    } else {
-                        console.log('✅ Буфер обміну НЕ порожній. Не перезавантажуємо.');
-                    }
-                } catch (err) {
-                    console.error('⚠️ Помилка при читанні буфера:', err);
+        // 🕒 Через 60 сек перевірка буфера обміну
+        setTimeout(async () => {
+            if (isScriptStopped) return;
+            try {
+                const clipboard = await navigator.clipboard.readText();
+                if (!clipboard.trim()) {
+                    console.warn('🕒 Через 60 сек буфер обміну порожній. Перезавантаження...');
+                    handleNoSlotsFound(); // Викликаємо логіку переходу до наступного міста
+                } else {
+                    console.log('✅ Буфер обміну НЕ порожній. Не перезавантажуємо.');
                 }
-            }, 30000); // 30 000 мс = 30 сек
-            console.log('⏰ Запущено таймер перевірки буфера обміну (30 сек).');
-        };
-
-        // Запускаємо перевірку буфера обміну на початковому етапі
-        // Це дозволить засікти, якщо навіть на першому кроці не буде даних для PIN
-        startClipboardCheck();
-
+            } catch (err) {
+                console.error('⚠️ Помилка при читанні буфера:', err);
+            }
+        }, 60000); // 60 000 мс = 60 сек
 
         await wait(2239); // даємо час після кліку
         // 1️⃣ CAPTCHA
@@ -672,20 +635,15 @@
                     .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
                 if (captchaError) {
                     console.warn('❌ Капча невірна. Перезавантаження...');
-                    await sendTelegramMessage(`❌ Невірна капча у місті ${USER_CITY}.`);
                     handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
                     return;
                 }
 
             } else {
                 console.warn('❌ Кнопка loadSecondFormButton не знайдена');
-                await sendTelegramMessage(`❌ Кнопка loadSecondFormButton не знайдена у місті ${USER_CITY}.`);
-                handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
-                return;
             }
         } else {
             console.warn('🚫 Капча невірна. Кнопка не натиснута');
-            await sendTelegramMessage(`🚫 Капча невірна. Пропускаємо місто ${USER_CITY}.`);
             handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
             return;
         }
@@ -694,7 +652,6 @@
         const triggerStep2Button = await waitForElement('f1-life-situation-select2');
         if (!triggerStep2Button) {
             console.error('❌ select для міст не знайдено');
-            await sendTelegramMessage(`❌ select для міст не знайдено у місті ${USER_CITY}.`);
             handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
             return;
         }
@@ -711,73 +668,42 @@
         const loadSecondFormBtn = await waitForElement('loadSecondFormButton'); // Це та ж кнопка, що і раніше
         if (loadSecondFormBtn) {
             loadSecondFormBtn.addEventListener('click', () => {
-                // Ця подія може не спрацювати, якщо клік робиться програмно.
-                // Краще покладатися на явну перевірку після кліку.
-                // odoslatClicked = true;
+                odoslatClicked = true;
             });
         }
 
         async function waitForPINConditions() {
-            // Ця функція більше не потрібна в такому вигляді,
-            // оскільки ми вже клікнули loadSecondFormButton.
-            // Натомість, ми просто очікуємо елемент 'pin-code'.
+            while (!odoslatClicked && skipSubmit) { // Чекаємо або кліку, або помилки капчі
+                await wait(500);
+                if (isScriptStopped) return;
+            }
         }
 
-        // await waitForPINConditions(); // Видаляємо або модифікуємо цей виклик
+        await waitForPINConditions();
         if (isScriptStopped) return;
 
         const pinCodeEl = await waitForElement('pin-code');
         if (pinCodeEl) {
-            // Ми чекаємо 10.5 секунд, щоб Telegram-бот міг надіслати PIN-код,
-            // а користувач або інший процес могли скопіювати його в буфер обміну.
             await wait(10500);
             if (isScriptStopped) return;
-
-            // Очищаємо таймер перевірки буфера, оскільки ми зараз його зчитуватимемо
-            if (clipboardCheckTimeoutId) {
-                clearTimeout(clipboardCheckTimeoutId);
-                console.log('⏰ Таймер перевірки буфера обміну очищено.');
-            }
-
             try {
                 const clipboard = await navigator.clipboard.readText();
                 const pin = clipboard.trim();
-                if (!/^\d{4,8}$/.test(pin) || pin === '') { // Додаємо перевірку на порожній PIN
-                    console.warn('⚠️ PIN з буфера не знайдено або він не схожий на код:', pin);
-                    await sendTelegramMessage(`⚠️ Недійсний PIN з буфера обміну у місті ${USER_CITY}.`);
-                    handleNoSlotsFound(); // Якщо PIN недійсний, переходимо до наступного міста
-                    return;
+                if (!/^\d{4,8}$/.test(pin)) {
+                    console.warn('⚠️ PIN з буфера не схожий на код:', pin);
                 }
                 pinCodeEl.focus();
                 await typeValue(pinCodeEl, pin);
                 console.log(`🔐 PIN з буфера вставлено: ${pin}`);
-                await sendTelegramMessage(`🔐 PIN вставлено у місті ${USER_CITY}.`);
-
 
                 const submitBtn = document.getElementById('loadMain');
                 if (submitBtn) {
                     submitBtn.click();
                     console.log('🚀 "Odoslať" натиснуто');
-                } else {
-                    console.warn('❌ Кнопка "Odoslať" (loadMain) не знайдена.');
-                    await sendTelegramMessage(`❌ Кнопка "Odoslať" не знайдена у місті ${USER_CITY}.`);
-                    handleNoSlotsFound();
-                    return;
                 }
 
-                await wait(3150); // Даємо час на обробку форми після відправки PIN
+                await wait(3150);
                 if (isScriptStopped) return;
-
-                // Перевіряємо, чи є повідомлення про помилку "obsadené" (зайнято)
-                const noSlotsMessage = [...document.querySelectorAll('span, div, p')]
-                    .find(el => el.textContent?.toLowerCase().includes('obsadené') || el.textContent?.toLowerCase().includes('žiadne voľné termíny') || el.textContent?.toLowerCase().includes('nie sú dostupné termíny'));
-
-                if (noSlotsMessage) {
-                    console.warn(`❌ Немає вільних термінів у місті ${USER_CITY}.`);
-                    await sendTelegramMessage(`❌ Немає вільних термінів у місті ${USER_CITY}.`);
-                    handleNoSlotsFound(); // Перехід до наступного міста
-                    return;
-                }
 
                 const select1 = document.getElementById('f1-life-situation-select1');
                 const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
@@ -785,11 +711,6 @@
                     option1.setAttribute('selected', 'selected');
                     triggerEvents(select1);
                     console.log('✅ select1 встановлено');
-                } else {
-                    console.warn('❌ select1 або його опція не знайдено. Можливо, термінів немає.');
-                    await sendTelegramMessage(`❌ select1 або його опція не знайдено у місті ${USER_CITY}. Можливо, термінів немає.`);
-                    handleNoSlotsFound();
-                    return;
                 }
 
                 await wait(2260);
@@ -801,37 +722,98 @@
                     option2.setAttribute('selected', 'selected');
                     triggerEvents(select2);
                     console.log('✅ select2 встановлено');
-                    // Якщо тут все успішно, це означає, що терміни знайдені
-                    await sendTelegramMessage(`🎉 Здається, знайдені терміни у місті ${USER_CITY}! Перевірте сторінку.`);
-                    // Зупиняємо скрипт, щоб користувач міг вручну продовжити запис
-                    toggleScriptStop(); // Перемикаємо кнопку на "Продовжити" і зупиняємо скрипт
-                    // Можна також додати alert або інше сповіщення користувачу
-                    alert(`✅ Знайдено терміни у місті ${USER_CITY}! Перевірте сторінку.`);
-
-                } else {
-                    console.warn('❌ select2 або його опція не знайдено. Можливо, термінів немає після вибору першого селекта.');
-                    await sendTelegramMessage(`❌ select2 або його опція не знайдено у місті ${USER_CITY}. Можливо, термінів немає.`);
-                    handleNoSlotsFound(); // Якщо і тут немає, переходимо до наступного міста
-                    return;
                 }
-
-
             } catch (err) {
-                console.error('❌ Помилка при обробці PIN або наступних кроків:', err);
-                await sendTelegramMessage(`❌ Неочікувана помилка під час обробки PIN у місті ${USER_CITY}: ${err.message}.`);
-                handleNoSlotsFound(); // При будь-якій помилці переходимо до наступного міста
+                console.error('❌ Помилка з PIN-кодом:', err);
+                handleNoSlotsFound(); // Якщо проблеми з PIN, спробувати наступне місто
                 return;
             }
+        }
+
+        console.log('📝 Очікування вибору міста…');
+
+        await wait(weightedRandomDelay(1700, 2500));
+        if (isScriptStopped) return;
+        await fillFields(step2Fields, 'Step 2');
+        if (isScriptStopped) return;
+
+        const submitBtn = document.getElementById('submitter1');
+        if (submitBtn) {
+            submitBtn.click();
+            console.log('🚀 "Надіслати" натиснуто');
+        }
+        console.log('✅ Step 2 завершено');
+
+        await wait(1546);
+        if (isScriptStopped) return;
+
+        const allAvailableSlots = [
+            ...document.querySelectorAll('input[type="radio"][name="offices"]')
+        ].filter(el =>
+            el.id &&
+            el.id.includes(' -') &&
+            el.offsetParent !== null &&
+            !el.disabled
+        );
+
+        const matchingSlot = allAvailableSlots.find(el =>
+            el.id.includes(`${USER_CITY} -`)
+        );
+
+        if (matchingSlot) {
+            matchingSlot.click();
+            console.log('✅ Обрано слот:', matchingSlot.id);
+
+            const now = new Date().toLocaleString();
+            const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+            await sendTelegramMessage(msg);
+            // Тут можна додати логіку для подальших дій після знаходження слота, якщо вони є.
+            // Наприклад, натиснути кнопку для підтвердження або перейти на наступний крок.
         } else {
-            console.warn('❌ Елемент PIN-коду не знайдено. Завершення сценарію.');
-            await sendTelegramMessage(`❌ Елемент PIN-коду не знайдено у місті ${USER_CITY}.`);
-            handleNoSlotsFound(); // Якщо не знайшли поле PIN, також переходимо до наступного
+            const now = new Date().toLocaleString();
+            let msg;
+            if (allAvailableSlots.length > 0) {
+                msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+                await sendTelegramMessage(msg);
+            } else {
+                console.log('❌ Жодного доступного терміну не знайдено');
+                msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
+                await sendTelegramMessage(msg);
+            }
+            handleNoSlotsFound();
+        }
+    }
+
+    async function handleNoSlotsFound() {
+        if (isScriptStopped) {
+            console.log('Скрипт зупинено, перезавантаження скасовано.');
             return;
         }
 
-        // Якщо сценарій дійшов до цього місця і не було повернення, це означає,
-        // що процес автоматизації мав би бути успішним або зупинений користувачем.
-        console.log(`✅ Основний сценарій для міста ${USER_CITY} завершено.`);
+        currentCityIndex++;
+        if (currentCityIndex < USER_CITIES.length) {
+            USER_CITY = USER_CITIES[currentCityIndex];
+            localStorage.setItem('currentCityIndex', currentCityIndex);
+            console.log(`🔄 Переходимо до наступного міста: ${USER_CITY}`);
+            const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+            console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для спроби наступного міста`);
+            setTimeout(() => location.reload(), reloadIn);
+        } else {
+            console.log('🏁 Усі міста перебрано, терміни не знайдено. Починаємо спочатку.');
+            localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс для початку циклу знову
+            const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+            console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для початку нового циклу міст`);
+            setTimeout(() => location.reload(), reloadIn);
+        }
     }
+
+    // Запускаємо основний сценарій тільки якщо скрипт не зупинений
+    if (!isScriptStopped) {
+        runMainScenario();
+    } else {
+        console.log('Скрипт знаходиться в зупиненому стані. Натисніть "Продовжити" для запуску.');
+    }
+    // Запускаємо перевірку Telegram на фоні
+    startTelegramLoop();
 
 })();
