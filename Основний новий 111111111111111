@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name Universal main
-// @namespace Violentmonkey Scripts
-// @match https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
-// @grant none
-// @version 2.0 // Збільшена версія
-// @author -
+// @name        Universal main
+// @namespace   Violentmonkey Scripts
+// @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
+// @grant       none
+// @version     1.6
+// @author      -
 // @description Автоматичне заповнення форми MINV з Telegram, CAPTCHA, GPT-4o, DeepSeek, фіксованими ключами та UI для редагування.
-// @run-at document-start
+// @run-at      document-end
 // ==/UserScript==
 
 (function () {
@@ -29,10 +29,12 @@
     const STEP3_SELECT_1_VALUE = localStorage.getItem('STEP3_SELECT_1_VALUE') || '242';
     const STEP3_SELECT_2_VALUE = localStorage.getItem('STEP3_SELECT_2_VALUE') || '243';
 
-    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-7oh1Zgb8SHJoFO7nXeZXpHfF-isuZOyBHLFvJV88xGD1TKvQSW_8DQQ5HwO_gv8sRK1v7PU80vT3BlbkFJ20kJ8hlvm7DDim-90js6HfRAWw92evngeZpsuCQhke1Va4OOUrZIGLtohYxRpaEZ5FA_Xj7ygAA';
+    const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
+    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-7oh1Zgb8SHJoFO7nXeZXpHfF-isuZOyBHLvJV88xGD1TKvQSW_8DQQ5HwO_gv8sRK1v7PU80vT3BlbkFJ20kJ8hlvm7DDim-90js6HfRAWw92evngeZpsuCQhke1Va4OOUrZIGLtohYxRpaEZ5FA_Xj7ygAA';
     const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_WWWImdcpG5yV58xSokbj5nbm';
     const TELEGRAM_BOT_TOKEN = localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
     const TELEGRAM_CHAT_ID = localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A';
+    const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
     window.addEventListener('load', () => {
         const btn = document.createElement('button');
@@ -50,6 +52,11 @@
         }
         stopBtn.onclick = toggleScriptStop;
         document.body.appendChild(stopBtn);
+
+        // Start the main scenario if the script is not stopped
+        if (!isScriptStopped) {
+            runMainScenario();
+        }
     });
 
     window.openSettingsModal = function () {
@@ -111,10 +118,12 @@
         localStorage.setItem('USER_PHONE', document.getElementById('set_phone').value);
         localStorage.setItem('USER_EMAIL', document.getElementById('set_email').value);
 
+        // *** ОНОВЛЕНИЙ КОД ТУТ ***
         const selectedCities = Array.from(document.querySelectorAll('#set_cities_container .city-checkbox:checked'))
                                        .map(checkbox => checkbox.value);
         localStorage.setItem('USER_CITIES', JSON.stringify(selectedCities));
         localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс при збереженні нових міст
+        // **********************
 
         const [v1, v2] = document.getElementById('set_type').value.split('|');
         localStorage.setItem('STEP3_SELECT_1_VALUE', v1);
@@ -147,7 +156,7 @@
     }
 
     /* ------------------------------------------------------------------
-        ⚙️  Налаштування «human-like» пауз
+        ⚙️ Налаштування «human-like» пауз
     ------------------------------------------------------------------ */
     const config = {
         // між натисканнями клавіш
@@ -178,7 +187,7 @@
     };
 
     /* ------------------------------------------------------------------
-        🏗  Утиліти
+        🏗 Утиліти
     ------------------------------------------------------------------ */
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -190,9 +199,6 @@
 
     let lastMessageId = 0;
 
-    // !! УВАГА: Цю функцію checkTelegram() потрібно буде адаптувати,
-    // якщо ви захочете, щоб Telegram-бот вставляв PIN-код.
-    // Наразі вона лише встановлює значення у select2 (що було для старої логіки).
     async function checkTelegram() {
         try {
             console.log('🔁 Перевірка повідомлень Telegram…');
@@ -220,17 +226,6 @@
             lastMessageId = lastMsg.update_id;
             console.log('📨 Нове повідомлення:', lastMsg.message?.text || '(без тексту)');
 
-            // Приклад: Якщо Telegram має надсилати PIN
-            const pinCodeEl = document.getElementById('pin-code');
-            const messageText = lastMsg.message?.text?.trim();
-            if (pinCodeEl && messageText && /^\d{4,8}$/.test(messageText)) {
-                 await typeValue(pinCodeEl, messageText);
-                 console.log(`🔐 PIN з Telegram вставлено: ${messageText}`);
-                 // Якщо Telegram успішно вставив PIN, можна зупинити скрипт або продовжити далі
-                 return;
-            }
-
-            // Стара логіка для select2, можливо, вона вже не потрібна або потребує змін
             console.log('🕵️‍♂️ Очікування появи select2 в DOM…');
             let select2 = null;
             for (let i = 0; i < 120; i++) { // 30 сек = 120 x 250мс
@@ -261,7 +256,7 @@
             console.error("❌ Помилка у checkTelegram:", err);
         }
     }
-    // 🔁 Перевіряє кожні 2 секунди
+    // 🔁 Перевіряє кожні 15 секунд
     function startTelegramLoop() {
         if (!isScriptStopped) {
             checkTelegram().finally(() => {
@@ -270,6 +265,8 @@
         }
     }
 
+
+    // Рівномірний (залишив для сумісності)
     function randomDelay(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
@@ -294,7 +291,7 @@
     }
 
     /* ------------------------------------------------------------------
-        📖  Очікування елемента в DOM
+        📖 Очікування елемента в DOM
     ------------------------------------------------------------------ */
     function waitForElement(id) {
         return new Promise((resolve) => {
@@ -312,7 +309,7 @@
                     resolve(el);
                 } else if (++attempts >= config.waitForElementMaxAttempts) {
                     clearInterval(int);
-                    console.warn(`❌ Не знайдено елемент: ${id} після ${config.waitForElementMaxAttempts * config.waitForElementInterval / 1000} секунд.`);
+                    console.warn(`❌ Не знайдено елемент: ${id}`);
                     resolve(null);
                 }
             }, config.waitForElementInterval);
@@ -320,7 +317,7 @@
     }
 
     /* ------------------------------------------------------------------
-        ⌨️  Набір тексту «по-людськи»
+        ⌨️ Набір тексту «по-людськи»
     ------------------------------------------------------------------ */
     async function typeValue(el, value) {
         if (isScriptStopped) return;
@@ -341,7 +338,7 @@
     }
 
     /* ------------------------------------------------------------------
-        🖼  Розпізнавання CAPTCHA (GPT-4o Vision)
+        🖼 Розпізнавання CAPTCHA (GPT-4o Vision)
     ------------------------------------------------------------------ */
     async function imageToBase64(img) {
         return new Promise((res) => {
@@ -354,14 +351,11 @@
         });
     }
 
-    let skipSubmit = false; // Використовуємо, щоб пропустити клік на кнопку, якщо капча 100% невірна
+    let skipSubmit = false;
 
     async function recognizeCaptcha(imageDataUrl) {
         if (isScriptStopped) return '1';
         console.log('🔍 Відправка капчі в OpenAI…');
-
-        const OPENAI_MODELS = ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo']; // Уточнені назви моделей
-        const promptText = 'Extract only the 5-character CAPTCHA code (a-z, 0-9). No extra text. Only lowercase English letters and numbers are allowed.';
 
         for (const model of OPENAI_MODELS) {
             if (isScriptStopped) return '1';
@@ -382,7 +376,7 @@
                                 content: [
                                     {
                                         type: 'text',
-                                        text: promptText,
+                                        text: 'Text: "Extract only the exact 5-character CAPTCHA code (a-z, 0-9). No explanations, no quotes, no extra text", it is only lowercase English letters and numbers are allowed.',
                                     },
                                     {
                                         type: 'image_url',
@@ -399,22 +393,15 @@
 
                 if (!response.ok) {
                     console.warn(`⚠️ Модель ${model} повернула помилку:`, result);
-                    if (result.error?.code === "content_policy_violation" || result.error?.message?.includes("content too long")) {
-                         console.warn("⚠️ Можлива проблема з розміром або політикою контенту. Пробуємо наступну модель.");
-                    }
-                    continue;
+                    continue; // пробуємо наступну модель
                 }
 
                 console.log(`📩 Відповідь OpenAI (${model}):`, result);
                 console.log(`✅ Модель ${model} спрацювала успішно`);
 
                 let captchaText = result?.choices?.[0]?.message?.content?.trim();
-                if (captchaText) {
-                    captchaText = captchaText.toLowerCase().replace(/[^a-z0-9]/g, '');
-                }
-
                 if (!captchaText || captchaText.length !== 5) {
-                    console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Капча не 5 символів. Викор. "1"`);
+                    console.warn(`⚠️ Невірна відповідь AI (${captchaText}). Викор. "1"`);
                     skipSubmit = true;
                     return '1';
                 } else {
@@ -424,20 +411,17 @@
 
             } catch (err) {
                 console.error(`❌ Помилка з моделлю ${model}:`, err);
+                // пробуємо наступну модель
             }
         }
 
-        console.error('❌ Усі моделі не дали відповіді. Повертаємо "1" і пропускаємо submit');
+        console.error('❌ Усі моделі не дали відповіді. Повертаємо "1"');
         skipSubmit = true;
         return '1';
     }
 
     async function typeCaptchaLikeHuman(el, text) {
         if (isScriptStopped) return;
-        if (!document.hasFocus()) {
-            console.warn('⚠️ Документ не сфокусований. Введення капчі може бути некоректним.');
-        }
-
         el.focus();
         el.value = '';
         triggerEvents(el);
@@ -458,11 +442,7 @@
         if (isScriptStopped) return;
         const imgEl = await waitForElement('captchaImage');
         const inputEl = await waitForElement('answer');
-        if (!imgEl || !inputEl) {
-            console.error('❌ Елементи капчі не знайдені.');
-            handleNoSlotsFound();
-            return;
-        }
+        if (!imgEl || !inputEl) return;
 
         const base64 = await imageToBase64(imgEl);
         const text = await recognizeCaptcha(base64);
@@ -472,7 +452,7 @@
     }
 
     /* ------------------------------------------------------------------
-        🗒  Налаштування полів
+        🗒 Налаштування полів
     ------------------------------------------------------------------ */
     const delayedFields = {
         'residence-address-county-0': 2000,
@@ -495,6 +475,7 @@
                 el.value = USER_BIRTHDATE;
                 triggerEvents(el);
                 await wait(240);
+                // повернення курсора і видалення крапок (ориг. логіка)
                 for (let i = 0; i < 10; i++) {
                     if (isScriptStopped) return;
                     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
@@ -515,62 +496,43 @@
         ['email0', USER_EMAIL, 'text'],
     ];
 
-    // Зміни в step2Fields: прибираємо радіо-кнопку міста звідси
     const step2Fields = [
+        [USER_CITY, true, 'radio'], // USER_CITY тепер динамічно змінюється
         ['s42-check-gdpr-info', true, 'checkbox'],
         ['fs13-0-travel-doc-type', '1', 'select'],
         ['fs13-travel-doc-number', USER_PASSPORT, 'text'],
+        ['submitter1', null, 'click'],
     ];
 
-    function handleNoSlotsFound() {
-        console.log('🔄 Не знайдено доступних слотів, невірна капча/пін, або місто не знайдено. Перехід до наступного міста...');
-        currentCityIndex++;
-        if (currentCityIndex >= USER_CITIES.length) {
-            currentCityIndex = 0; // Повертаємося на початок списку
-            console.log('🏁 Усі міста перебрано. Починаємо спочатку.');
-        }
-        localStorage.setItem('currentCityIndex', currentCityIndex);
-        USER_CITY = USER_CITIES[currentCityIndex]; // Оновлюємо поточне місто
-        location.reload(); // Перезавантажуємо сторінку, щоб скрипт запустився з новим містом
-    }
-
-    // Функція для перевірки наявності повідомлень про помилки
-    function checkErrorMessages() {
-        const errors = [...document.querySelectorAll('li.msg.error, span.error, div.error')]
-            .map(el => el.textContent?.trim().toLowerCase())
-            .filter(text =>
-                text?.includes('nesprávny kód') ||
-                text?.includes('nesprávne') ||
-                text?.includes('zadaný overovací kód je nesprávny') ||
-                text?.includes('zadaný simplecaptcha kód je nesprávny')
-            );
-        return errors.length > 0;
-    }
-
     /* ------------------------------------------------------------------
-        🔄  Заповнення полів (human-like)
+        🔄 Заповнення полів (human-like)
     ------------------------------------------------------------------ */
     async function fillFields(fields, label) {
         if (isScriptStopped) return;
         for (const [id, value, type] of fields) {
             if (isScriptStopped) return;
             let el = document.getElementById(id);
-            // Видалено специфічну логіку для "radio" типу, оскільки місто вибирається окремо тепер.
-            if (!el && type !== 'click') continue;
+            if (!el && type === 'radio') {
+                // Це місце для вибору радіо-кнопки міста
+                el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
+                    (n) => n.id && n.id.startsWith(USER_CITY), // Використовуємо USER_CITY
+                );
+                if (el) {
+                    const now = new Date().toLocaleString();
+                    const msg = `🕒 ${now}\n🆔 ${el.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+                    console.log(msg);
+                    await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
+                }
+            }
+            if (!el) continue;
 
             const preDelay = delayedFields[id]
                 ? delayedFields[id] + randomDelay(config.delayedFieldJitterMin, config.delayedFieldJitterMax)
                 : weightedRandomDelay(config.preFieldDelayMin, config.preFieldDelayMax);
             await wait(preDelay);
             if (isScriptStopped) return;
-
-            if (document.activeElement !== document.body && document.activeElement !== el && !document.hasFocus()) {
-                 console.warn(`⚠️ Документ не сфокусований при спробі фокусувати ${id}.`);
-            }
-            if (type !== 'click') {
-                el.focus();
-                await wait(weightedRandomDelay(50, 180));
-            }
+            el.focus();
+            await wait(weightedRandomDelay(50, 180));
 
             try {
                 switch (type) {
@@ -586,12 +548,15 @@
                         triggerEvents(el);
                         break;
                     case 'click':
-                        if (el) el.click();
+                        el.click();
                         break;
                     case 'custom':
                         await value(el);
                         break;
-                    // Радіо-кнопки міст обробляються окремо
+                    case 'radio':
+                        el.checked = true;
+                        triggerEvents(el);
+                        break;
                 }
             } catch (e) {
                 console.error(`[${label}] ${id}:`, e);
@@ -604,8 +569,26 @@
         }
     }
 
+    /**
+     * Handles the scenario where no slots are found or an error occurs,
+     * switching to the next city in the list and reloading the page.
+     */
+    async function handleNoSlotsFound() {
+        console.log('🔄 Не знайдено вільних слотів або сталася помилка. Перехід до наступного міста...');
+        currentCityIndex++;
+        if (currentCityIndex >= USER_CITIES.length) {
+            currentCityIndex = 0; // Повертаємося на початок списку
+            console.log('🏁 Пройдено всі міста. Починаємо спочатку.');
+            await sendTelegramMessage('🏁 Пройдено всі міста. Починаємо спочатку.');
+        }
+        localStorage.setItem('currentCityIndex', currentCityIndex.toString());
+        USER_CITY = USER_CITIES[currentCityIndex]; // Оновлюємо USER_CITY
+        await sendTelegramMessage(`🏙️ Переходимо до міста: ${USER_CITY}`);
+        location.reload(); // Перезавантажуємо сторінку для наступного міста
+    }
+
     /* ------------------------------------------------------------------
-        🚀  Основний сценарій
+        🚀 Основний сценарій
     ------------------------------------------------------------------ */
     async function runMainScenario() {
         if (isScriptStopped) {
@@ -615,23 +598,61 @@
 
         console.log(`🚀 Старт автозаповнення для міста: ${USER_CITY}`);
 
-        await wait(weightedRandomDelay(800, 1500));
+        // Очищення буфера обміну після вставлення (або на початку, щоб уникнути залишків)
+        await navigator.clipboard.writeText('');
+        console.log('🧹 Буфер обміну очищено перед початком.');
 
+        await wait(weightedRandomDelay(800, 1500));
         // 🔘 Натискання langSK одразу на старті
         const langBtn = await waitForElement('langSK');
         if (langBtn) {
             langBtn.click();
             console.log('🚀 "langSK" натиснуто');
-            await wait(1500);
-            if (checkErrorMessages()) {
-                console.warn('❌ Помилка після натискання langSK. Перезавантаження...');
-                handleNoSlotsFound();
+            await wait(2500); // даємо час з'явитися повідомленню про помилку
+
+            const captchaError = [...document.querySelectorAll('span, div')]
+                .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
+
+            if (captchaError) {
+                console.warn('❌ Капча невірна. Перезавантаження...');
+                handleNoSlotsFound(); // Викликаємо логіку переходу до наступного міста
                 return;
             }
         } else {
-            console.warn('❌ Кнопка langSK не знайдена. Продовжуємо, але можливі проблеми.');
+            console.warn('❌ Кнопка langSK не знайдена навіть після очікування');
         }
 
+        // 🕒 Через 30 секунд перевірка буфера обміну
+        // Цей таймер буде запущений після початкового заповнення форми
+        // і буде чекати на появу PIN-коду в буфері.
+        let clipboardCheckTimeoutId = null; // Зберігаємо ID таймера, щоб можна було його очистити
+
+        const startClipboardCheck = () => {
+            if (clipboardCheckTimeoutId) clearTimeout(clipboardCheckTimeoutId); // Очищаємо попередній таймер, якщо існує
+            clipboardCheckTimeoutId = setTimeout(async () => {
+                if (isScriptStopped) return;
+                try {
+                    const clipboard = await navigator.clipboard.readText();
+                    if (!clipboard.trim()) {
+                        console.warn('🕒 Через 30 сек буфер обміну порожній. Перезавантаження...');
+                        await sendTelegramMessage(`⚠️ Буфер обміну порожній після 30 секунд у місті ${USER_CITY}. Слотів, ймовірно, немає.`);
+                        handleNoSlotsFound(); // Викликаємо логіку переходу до наступного міста
+                    } else {
+                        console.log('✅ Буфер обміну НЕ порожній. Не перезавантажуємо.');
+                    }
+                } catch (err) {
+                    console.error('⚠️ Помилка при читанні буфера:', err);
+                }
+            }, 30000); // 30 000 мс = 30 сек
+            console.log('⏰ Запущено таймер перевірки буфера обміну (30 сек).');
+        };
+
+        // Запускаємо перевірку буфера обміну на початковому етапі
+        // Це дозволить засікти, якщо навіть на першому кроці не буде даних для PIN
+        startClipboardCheck();
+
+
+        await wait(2239); // даємо час після кліку
         // 1️⃣ CAPTCHA
         await solveCaptcha();
         if (isScriptStopped) return;
@@ -640,127 +661,177 @@
         await fillFields(step1Fields, 'Step 1');
         if (isScriptStopped) return;
 
-        // Натискаємо кнопку для переходу на крок 2
-        const btnLoadSecondForm = await waitForElement('loadSecondFormButton');
-        if (btnLoadSecondForm) {
-            btnLoadSecondForm.click();
-            console.log('🚀 "loadSecondFormButton" натиснуто');
-            await wait(2500);
+        if (!skipSubmit) {
+            const btn = document.getElementById('loadSecondFormButton');
+            if (btn) {
+                btn.click();
+                console.log('🚀 "loadSecondFormButton" натиснуто');
+                await wait(2500); // даємо час з'явитися повідомленню про помилку
 
-            if (checkErrorMessages()) {
-                console.warn('❌ Капча невірна або інша помилка після натискання loadSecondFormButton. Перезавантаження...');
-                handleNoSlotsFound();
-                return;
-            }
-        } else {
-            console.warn('❌ Кнопка loadSecondFormButton не знайдена. Перезавантаження...');
-            handleNoSlotsFound();
-            return;
-        }
-
-        // 3️⃣ Чекаємо селект для типу операції (f1-life-situation-select1)
-        // та f1-life-situation-select2, який показує опції після вибору першого
-        const select1 = await waitForElement('f1-life-situation-select1');
-        if (!select1) {
-            console.error('❌ f1-life-situation-select1 не знайдено.');
-            handleNoSlotsFound();
-            return;
-        }
-        select1.value = STEP3_SELECT_1_VALUE;
-        triggerEvents(select1);
-        console.log(`✅ f1-life-situation-select1 встановлено на ${STEP3_SELECT_1_VALUE}`);
-        await wait(1000); // Даємо час на динамічне завантаження f1-life-situation-select2
-
-        // Чекаємо другий селект і встановлюємо його значення
-        const select2 = await waitForElement('f1-life-situation-select2');
-        if (!select2) {
-            console.error('❌ f1-life-situation-select2 не знайдено.');
-            handleNoSlotsFound();
-            return;
-        }
-        select2.value = STEP3_SELECT_2_VALUE;
-        triggerEvents(select2);
-        console.log(`✅ f1-life-situation-select2 встановлено на ${STEP3_SELECT_2_VALUE}`);
-        await wait(1000); // Даємо час на оновлення DOM і появу радіо-кнопок міст
-
-        // 4️⃣ Вибір міста (винесено окремо, щоб було після селектів)
-        console.log(`🕵️‍♂️ Шукаємо радіо-кнопку для міста: ${USER_CITY}`);
-        const cityRadioBtn = await waitForElement(USER_CITY); // ID радіо-кнопки має відповідати "OCP Bratislava"
-        if (cityRadioBtn) {
-            cityRadioBtn.checked = true;
-            triggerEvents(cityRadioBtn);
-            console.log(`✅ Місто "${USER_CITY}" вибрано.`);
-            const now = new Date().toLocaleString();
-            const msg = `🕒 ${now}\n✅ Місто: ${USER_CITY}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-            await sendTelegramMessage(msg);
-            await wait(weightedRandomDelay(500, 1000));
-        } else {
-            console.warn(`❌ Радіо-кнопка для міста "${USER_CITY}" не знайдена. Перехід до наступного міста.`);
-            handleNoSlotsFound();
-            return;
-        }
-
-        // 5️⃣ Заповнення решти полів кроку 2
-        await fillFields(step2Fields, 'Step 2');
-        if (isScriptStopped) return;
-
-        // 6️⃣ PIN-код → довантажуємо selects
-        const pinCodeEl = await waitForElement('pin-code');
-        if (pinCodeEl) {
-            console.log('⏳ Очікуємо введення PIN-коду. Будь ласка, вставте PIN вручну або через Telegram.');
-            startTelegramLoop(); // Запускаємо перевірку Telegram для PIN
-
-            // Чекаємо 15 секунд, або поки pinCodeEl не буде заповнено
-            const pinWaitStartTime = Date.now();
-            const pinWaitTimeout = 15000; // 15 секунд
-            while (!pinCodeEl.value.trim() && (Date.now() - pinWaitStartTime < pinWaitTimeout)) {
-                await wait(500); // Перевіряємо кожні 0.5 секунди
-                if (isScriptStopped) return;
-            }
-
-            if (!pinCodeEl.value.trim()) {
-                 console.warn('❌ PIN-код не був введений протягом 15 секунд. Перезавантаження...');
-                 handleNoSlotsFound();
-                 return;
-            } else {
-                 console.log(`🔐 PIN-код введено: ${pinCodeEl.value}`);
-            }
-
-            const submitBtn = await waitForElement('submitter1'); // Це кнопка "Одослать" після введення PIN
-            if (submitBtn) {
-                await wait(weightedRandomDelay(500, 1000));
-                submitBtn.click();
-                console.log('🚀 Кнопка "Одослать" натиснута.');
-                await wait(5000);
-
-                // Перевірка на помилку PIN-коду або відсутність слотів
-                if (checkErrorMessages() || window.location.href.includes('ecu-vysys')) {
-                    console.warn('❌ Невірний PIN-код або слот не знайдено після відправки PIN. Перезавантаження...');
-                    handleNoSlotsFound();
-                    return;
-                } else {
-                    console.log('✅ Сторінка успішно змінилася, ймовірно, слот знайдено!');
-                    await sendTelegramMessage(`🎉 Знайдено слот для міста ${USER_CITY}!`);
-                    toggleScriptStop();
+                const captchaError = [...document.querySelectorAll('span, div')]
+                    .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
+                if (captchaError) {
+                    console.warn('❌ Капча невірна. Перезавантаження...');
+                    await sendTelegramMessage(`❌ Невірна капча у місті ${USER_CITY}.`);
+                    handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
                     return;
                 }
+
             } else {
-                console.warn('❌ Кнопка "Одослать" (submitter1) не знайдена після введення PIN. Перезавантаження...');
-                handleNoSlotsFound();
+                console.warn('❌ Кнопка loadSecondFormButton не знайдена');
+                await sendTelegramMessage(`❌ Кнопка loadSecondFormButton не знайдена у місті ${USER_CITY}.`);
+                handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
                 return;
             }
         } else {
-            console.warn('❌ Поле для PIN-коду не знайдено. Перезавантаження...');
-            handleNoSlotsFound();
+            console.warn('🚫 Капча невірна. Кнопка не натиснута');
+            await sendTelegramMessage(`🚫 Капча невірна. Пропускаємо місто ${USER_CITY}.`);
+            handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
             return;
         }
 
-        console.log('✅ Скрипт успішно завершив основні кроки. Очікування слотів або ручного втручання.');
+        // 3️⃣ Чекаємо селект міст
+        const triggerStep2Button = await waitForElement('f1-life-situation-select2');
+        if (!triggerStep2Button) {
+            console.error('❌ select для міст не знайдено');
+            await sendTelegramMessage(`❌ select для міст не знайдено у місті ${USER_CITY}.`);
+            handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
+            return;
+        }
+
+        // Модифікуємо обробник подій, щоб він спрацьовував тільки після заповнення PIN-коду
+        // або інших необхідних кроків, які ведуть до появи селектів.
+        // Це трохи змінить оригінальну логіку, де listener додавався одразу.
+        // Замість listener'а, який очікує зміни, ми просто виконаємо логіку після
+        // того, як елементи з'являться і буде встановлений PIN.
+
+        // 4️⃣ PIN-код → довантажуємо selects
+        let odoslatClicked = false;
+
+        const loadSecondFormBtn = await waitForElement('loadSecondFormButton'); // Це та ж кнопка, що і раніше
+        if (loadSecondFormBtn) {
+            loadSecondFormBtn.addEventListener('click', () => {
+                // Ця подія може не спрацювати, якщо клік робиться програмно.
+                // Краще покладатися на явну перевірку після кліку.
+                // odoslatClicked = true;
+            });
+        }
+
+        async function waitForPINConditions() {
+            // Ця функція більше не потрібна в такому вигляді,
+            // оскільки ми вже клікнули loadSecondFormButton.
+            // Натомість, ми просто очікуємо елемент 'pin-code'.
+        }
+
+        // await waitForPINConditions(); // Видаляємо або модифікуємо цей виклик
+        if (isScriptStopped) return;
+
+        const pinCodeEl = await waitForElement('pin-code');
+        if (pinCodeEl) {
+            // Ми чекаємо 10.5 секунд, щоб Telegram-бот міг надіслати PIN-код,
+            // а користувач або інший процес могли скопіювати його в буфер обміну.
+            await wait(10500);
+            if (isScriptStopped) return;
+
+            // Очищаємо таймер перевірки буфера, оскільки ми зараз його зчитуватимемо
+            if (clipboardCheckTimeoutId) {
+                clearTimeout(clipboardCheckTimeoutId);
+                console.log('⏰ Таймер перевірки буфера обміну очищено.');
+            }
+
+            try {
+                const clipboard = await navigator.clipboard.readText();
+                const pin = clipboard.trim();
+                if (!/^\d{4,8}$/.test(pin) || pin === '') { // Додаємо перевірку на порожній PIN
+                    console.warn('⚠️ PIN з буфера не знайдено або він не схожий на код:', pin);
+                    await sendTelegramMessage(`⚠️ Недійсний PIN з буфера обміну у місті ${USER_CITY}.`);
+                    handleNoSlotsFound(); // Якщо PIN недійсний, переходимо до наступного міста
+                    return;
+                }
+                pinCodeEl.focus();
+                await typeValue(pinCodeEl, pin);
+                console.log(`🔐 PIN з буфера вставлено: ${pin}`);
+                await sendTelegramMessage(`🔐 PIN вставлено у місті ${USER_CITY}.`);
+
+
+                const submitBtn = document.getElementById('loadMain');
+                if (submitBtn) {
+                    submitBtn.click();
+                    console.log('🚀 "Odoslať" натиснуто');
+                } else {
+                    console.warn('❌ Кнопка "Odoslať" (loadMain) не знайдена.');
+                    await sendTelegramMessage(`❌ Кнопка "Odoslať" не знайдена у місті ${USER_CITY}.`);
+                    handleNoSlotsFound();
+                    return;
+                }
+
+                await wait(3150); // Даємо час на обробку форми після відправки PIN
+                if (isScriptStopped) return;
+
+                // Перевіряємо, чи є повідомлення про помилку "obsadené" (зайнято)
+                const noSlotsMessage = [...document.querySelectorAll('span, div, p')]
+                    .find(el => el.textContent?.toLowerCase().includes('obsadené') || el.textContent?.toLowerCase().includes('žiadne voľné termíny') || el.textContent?.toLowerCase().includes('nie sú dostupné termíny'));
+
+                if (noSlotsMessage) {
+                    console.warn(`❌ Немає вільних термінів у місті ${USER_CITY}.`);
+                    await sendTelegramMessage(`❌ Немає вільних термінів у місті ${USER_CITY}.`);
+                    handleNoSlotsFound(); // Перехід до наступного міста
+                    return;
+                }
+
+                const select1 = document.getElementById('f1-life-situation-select1');
+                const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
+                if (option1) {
+                    option1.setAttribute('selected', 'selected');
+                    triggerEvents(select1);
+                    console.log('✅ select1 встановлено');
+                } else {
+                    console.warn('❌ select1 або його опція не знайдено. Можливо, термінів немає.');
+                    await sendTelegramMessage(`❌ select1 або його опція не знайдено у місті ${USER_CITY}. Можливо, термінів немає.`);
+                    handleNoSlotsFound();
+                    return;
+                }
+
+                await wait(2260);
+                if (isScriptStopped) return;
+
+                const select2 = document.getElementById('f1-life-situation-select2');
+                const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
+                if (option2) {
+                    option2.setAttribute('selected', 'selected');
+                    triggerEvents(select2);
+                    console.log('✅ select2 встановлено');
+                    // Якщо тут все успішно, це означає, що терміни знайдені
+                    await sendTelegramMessage(`🎉 Здається, знайдені терміни у місті ${USER_CITY}! Перевірте сторінку.`);
+                    // Зупиняємо скрипт, щоб користувач міг вручну продовжити запис
+                    toggleScriptStop(); // Перемикаємо кнопку на "Продовжити" і зупиняємо скрипт
+                    // Можна також додати alert або інше сповіщення користувачу
+                    alert(`✅ Знайдено терміни у місті ${USER_CITY}! Перевірте сторінку.`);
+
+                } else {
+                    console.warn('❌ select2 або його опція не знайдено. Можливо, термінів немає після вибору першого селекта.');
+                    await sendTelegramMessage(`❌ select2 або його опція не знайдено у місті ${USER_CITY}. Можливо, термінів немає.`);
+                    handleNoSlotsFound(); // Якщо і тут немає, переходимо до наступного міста
+                    return;
+                }
+
+
+            } catch (err) {
+                console.error('❌ Помилка при обробці PIN або наступних кроків:', err);
+                await sendTelegramMessage(`❌ Неочікувана помилка під час обробки PIN у місті ${USER_CITY}: ${err.message}.`);
+                handleNoSlotsFound(); // При будь-якій помилці переходимо до наступного міста
+                return;
+            }
+        } else {
+            console.warn('❌ Елемент PIN-коду не знайдено. Завершення сценарію.');
+            await sendTelegramMessage(`❌ Елемент PIN-коду не знайдено у місті ${USER_CITY}.`);
+            handleNoSlotsFound(); // Якщо не знайшли поле PIN, також переходимо до наступного
+            return;
+        }
+
+        // Якщо сценарій дійшов до цього місця і не було повернення, це означає,
+        // що процес автоматизації мав би бути успішним або зупинений користувачем.
+        console.log(`✅ Основний сценарій для міста ${USER_CITY} завершено.`);
     }
 
-    if (!isScriptStopped) {
-        runMainScenario();
-    } else {
-        console.log('Скрипт зупинено за замовчуванням. Натисніть "Продовжити", щоб запустити.');
-    }
 })();
