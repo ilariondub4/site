@@ -634,6 +634,7 @@
         if (isScriptStopped) return;
 
         // 2️⃣ Step 1
+    
         await fillFields(step1Fields, 'Step 1');
         if (isScriptStopped) return;
 
@@ -761,33 +762,23 @@
         if (isScriptStopped) return;
 
 
-
-
-     const allSlots = [
+const allRadios = [
   ...document.querySelectorAll('input[type="radio"][name="offices"]')
-].filter(el =>
-  el.offsetParent !== null &&
-  !el.disabled
+];
+
+const matchingSlot = allRadios.find(n => 
+  n.id && n.id.startsWith(USER_CITY) && n.id.includes(' - ') &&
+  n.offsetParent !== null && !n.disabled
 );
 
-const hasValidSlot = allSlots.some(el => el.id.includes(' - '));
-const matchingSlot = allSlots.find(el => el.id.includes(`${USER_CITY} -`));
+if (matchingSlot) {
+  matchingSlot.click();
+  console.log('✅ Обрано слот:', matchingSlot.id);
 
-if (hasValidSlot) {
-  if (matchingSlot) {
-    matchingSlot.click();
-    console.log('✅ Обрано слот:', matchingSlot.id);
+  const now = new Date().toLocaleString();
+  const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+  await sendTelegramMessage(msg);
 
-    const now = new Date().toLocaleString();
-    const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-    await sendTelegramMessage(msg);
-  } else {
-    const now = new Date().toLocaleString();
-    const msg = `🟡 ${now}\n✔️ Є термін, але не в нашому місті. Перший: ${allSlots.find(el => el.id.includes(' - '))?.id}`;
-    await sendTelegramMessage(msg);
-  }
-
-  // Натискаємо кнопку submitter1, якщо термін знайдено
   const submitBtn = document.getElementById('submitter1');
   if (submitBtn) {
     submitBtn.click();
@@ -795,12 +786,15 @@ if (hasValidSlot) {
   }
 } else {
   const now = new Date().toLocaleString();
-  const msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено з "-" у ID.\nМісто: ${USER_CITY}`;
+  const msg = `🔴 ${now}\n❌ Термін не знайдено у місті: ${USER_CITY}`;
   console.log(msg);
   await sendTelegramMessage(msg);
 
-            handleNoSlotsFound();
+  handleNoSlotsFound(); // ➡️ перехід до наступного міста
 }
+
+   
+
     }
 
     async function handleNoSlotsFound() {
