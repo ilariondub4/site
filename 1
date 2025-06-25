@@ -512,25 +512,12 @@
                 el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
                     (n) => n.id && n.id.startsWith(USER_CITY), // Використовуємо USER_CITY
                 );
-              if (el) {
-                // ДОДАНО: Перевірка, чи ID радіо-кнопки містить " - "
-                if (el.id.includes(' - ')) {
+                if (el) {
                     const now = new Date().toLocaleString();
-                    const msg = `🕒 ${now}\n✅ Знайдено слот з ID, що містить " - ":\n${el.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+                    const msg = `🕒 ${now}\n🆔 ${el.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
                     console.log(msg);
                     await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
-                } else {
-                    // Якщо ID не містить " - ", оновлюємо сторінку
-                    console.log(`❌ ID знайденої радіо-кнопки не містить " - ": ${el.id}. Оновлюємо сторінку.`);
-                    handleNoSlotsFound(); // Викликаємо перезавантаження сторінки
-                    return; // Зупиняємо виконання функції fillFields
                 }
-            } else {
-                // Якщо елемент не знайдено навіть за USER_CITY
-                console.log(`❌ Радіо-кнопка для міста ${USER_CITY} не знайдена. Оновлюємо сторінку.`);
-                handleNoSlotsFound(); // Викликаємо перезавантаження сторінки
-                return; // Зупиняємо виконання функції fillFields
-            }
             }
             if (!el) continue;
 
@@ -634,7 +621,6 @@
         if (isScriptStopped) return;
 
         // 2️⃣ Step 1
-    
         await fillFields(step1Fields, 'Step 1');
         if (isScriptStopped) return;
 
@@ -761,40 +747,41 @@
         await wait(1546);
         if (isScriptStopped) return;
 
+        const allAvailableSlots = [
+            ...document.querySelectorAll('input[type="radio"][name="offices"]')
+        ].filter(el =>
+            el.id &&
+            el.id.includes(' -') &&
+            el.offsetParent !== null &&
+            !el.disabled
+        );
 
-const allRadios = [
-  ...document.querySelectorAll('input[type="radio"][name="offices"]')
-];
+        const matchingSlot = allAvailableSlots.find(el =>
+            el.id.includes(`${USER_CITY} -`)
+        );
 
-const matchingSlot = allRadios.find(n => 
-  n.id && n.id.startsWith(USER_CITY) && n.id.includes(' - ') &&
-  n.offsetParent !== null && !n.disabled
-);
+        if (matchingSlot) {
+            matchingSlot.click();
+            console.log('✅ Обрано слот:', matchingSlot.id);
 
-if (matchingSlot) {
-  matchingSlot.click();
-  console.log('✅ Обрано слот:', matchingSlot.id);
-
-  const now = new Date().toLocaleString();
-  const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-  await sendTelegramMessage(msg);
-
-  const submitBtn = document.getElementById('submitter1');
-  if (submitBtn) {
-    submitBtn.click();
-    console.log('🚀 "Надіслати" натиснуто');
-  }
-} else {
-  const now = new Date().toLocaleString();
-  const msg = `🔴 ${now}\n❌ Термін не знайдено у місті: ${USER_CITY}`;
-  console.log(msg);
-  await sendTelegramMessage(msg);
-
-  handleNoSlotsFound(); // ➡️ перехід до наступного міста
-}
-
-   
-
+            const now = new Date().toLocaleString();
+            const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+            await sendTelegramMessage(msg);
+            // Тут можна додати логіку для подальших дій після знаходження слота, якщо вони є.
+            // Наприклад, натиснути кнопку для підтвердження або перейти на наступний крок.
+        } else {
+            const now = new Date().toLocaleString();
+            let msg;
+            if (allAvailableSlots.length > 0) {
+                msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+                await sendTelegramMessage(msg);
+            } else {
+                console.log('❌ Жодного доступного терміну не знайдено');
+                msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
+                await sendTelegramMessage(msg);
+            }
+            handleNoSlotsFound();
+        }
     }
 
     async function handleNoSlotsFound() {
