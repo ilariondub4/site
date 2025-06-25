@@ -776,6 +776,19 @@
             if (allAvailableSlots.length > 0) {
                 msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
                 await sendTelegramMessage(msg);
+                 await wait(weightedRandomDelay(700, 1200));
+            if (isScriptStopped) return;
+             const remainingStep2Fields = [
+                // Якщо 's42-check-gdpr-info' має заповнюватися саме тут, розкоментуйте:
+                // ['s42-check-gdpr-info', true, 'checkbox'],
+                ['fs13-0-travel-doc-type', '1', 'select'],
+                ['fs13-travel-doc-number', USER_PASSPORT, 'text'],
+                ['submitter1', null, 'click'], // Ця кнопка має бути натиснута в кінці
+            ];
+
+            await fillFields(remainingStep2Fields, 'Step 2 (після вибору слота)');
+            if (isScriptStopped) return;
+                
             } else {
                 console.log('❌ Жодного доступного терміну не знайдено');
                 msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
