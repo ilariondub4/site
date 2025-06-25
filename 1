@@ -734,41 +734,91 @@
 
         await wait(weightedRandomDelay(1700, 2500));
         if (isScriptStopped) return;
-        // await fillFields(step2Fields, 'Step 2');
-        //if (isScriptStopped) return;
 
-        // const submitBtn = document.getElementById('submitter1');
-        // if (submitBtn) {
-        //     submitBtn.click();
-        //     console.log('🚀 "Надіслати" натиснуто');
-        // }
-        // console.log('✅ Step 2 завершено');
 
         await wait(1546);
         if (isScriptStopped) return;
 
-        const allAvailableSlots = [
-            ...document.querySelectorAll('input[type="radio"][name="offices"]')
-        ].filter(el =>
-            el.id &&
-            el.id.includes(' -') &&
-            el.offsetParent !== null &&
-            !el.disabled
-        );
+//         const allAvailableSlots = [
+//             ...document.querySelectorAll('input[type="radio"][name="offices"]')
+//         ].filter(el =>
+//             el.id &&
+//             el.id.includes(' -') &&
+//             el.offsetParent !== null &&
+//             !el.disabled
+//         );
 
-        const matchingSlot = allAvailableSlots.find(el =>
-            el.id.includes(`${USER_CITY} -`)
-        );
+//         const matchingSlot = allAvailableSlots.find(el =>
+//             el.id.includes(`${USER_CITY} -`)
+//         );
 
-        if (matchingSlot) {
-    matchingSlot.click();
-    console.log('✅ Обрано слот:', matchingSlot.id);
+//         if (matchingSlot) {
+//     matchingSlot.click();
+//     console.log('✅ Обрано слот:', matchingSlot.id);
+
+//     const now = new Date().toLocaleString();
+//     const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+//     await sendTelegramMessage(msg);
+
+//     // Додано: чекаємо та заповнюємо Step 2
+//     await wait(weightedRandomDelay(700, 1200));
+//     await fillFields(step2Fields, 'Step 2');
+
+//     const submitBtn = document.getElementById('submitter1');
+//     if (submitBtn) {
+//         submitBtn.click();
+//         console.log('🚀 "Надіслати" натиснуто');
+//     }
+//     console.log('✅ Step 2 завершено');
+// }
+//         else {
+//             const now = new Date().toLocaleString();
+//             let msg;
+//             if (allAvailableSlots.length > 0) {
+//                 msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+//                 await sendTelegramMessage(msg);
+//                  await wait(weightedRandomDelay(700, 1200));
+
+//             await fillFields(step2Fields, 'Step 2');
+//                 console.log('Finish!!!');
+
+//             } else {
+//                 console.log('❌ Жодного доступного терміну не знайдено');
+//                 msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
+//                 await sendTelegramMessage(msg);
+//             }
+//             handleNoSlotsFound();
+//         }
+
+      const allAvailableSlots = [
+    ...document.querySelectorAll('input[type="radio"][name="offices"]')
+].filter(el =>
+    el.id &&
+    el.id.includes(' -') &&
+    el.offsetParent !== null &&
+    !el.disabled
+);
+
+// Шукаємо перший слот, який належить до якогось з наших USER_CITIES
+let selectedSlot = null;
+let selectedCity = null;
+
+for (const city of USER_CITIES) {
+    selectedSlot = allAvailableSlots.find(el => el.id.includes(`${city} -`));
+    if (selectedSlot) {
+        selectedCity = city;
+        break;
+    }
+}
+
+if (selectedSlot) {
+    selectedSlot.click();
+    console.log('✅ Обрано слот:', selectedSlot.id);
 
     const now = new Date().toLocaleString();
-    const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+    const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
     await sendTelegramMessage(msg);
 
-    // Додано: чекаємо та заповнюємо Step 2
     await wait(weightedRandomDelay(700, 1200));
     await fillFields(step2Fields, 'Step 2');
 
@@ -778,25 +828,19 @@
         console.log('🚀 "Надіслати" натиснуто');
     }
     console.log('✅ Step 2 завершено');
+} else {
+    // Жодного з наших міст немає серед доступних термінів
+    const now = new Date().toLocaleString();
+    let msg = '';
+    if (allAvailableSlots.length > 0) {
+        msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (НЕ наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+    } else {
+        msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено серед наших міст (${USER_CITIES.join(', ')}).`;
+    }
+    await sendTelegramMessage(msg);
+    handleNoSlotsFound();
+    return; // Далі не йдемо!
 }
-        else {
-            const now = new Date().toLocaleString();
-            let msg;
-            if (allAvailableSlots.length > 0) {
-                msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-                await sendTelegramMessage(msg);
-                 await wait(weightedRandomDelay(700, 1200));
-
-            await fillFields(step2Fields, 'Step 2');
-                console.log('Finish!!!');
-
-            } else {
-                console.log('❌ Жодного доступного терміну не знайдено');
-                msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
-                await sendTelegramMessage(msg);
-            }
-            handleNoSlotsFound();
-        }
     }
 
     async function handleNoSlotsFound() {
