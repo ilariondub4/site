@@ -139,12 +139,12 @@
             stopBtn.textContent = '▶️ Продовжити';
             stopBtn.style.backgroundColor = '#5cb85c'; // Зелений
             console.log('⏸️ Скрипт зупинено.');
-            sendTelegramMessage('⏸️ Скрипт зупинено вручну.');
+           // sendTelegramMessage('⏸️ Скрипт зупинено вручну.');
         } else {
             stopBtn.textContent = '⏸️ Стоп';
             stopBtn.style.backgroundColor = '#d9534f'; // Червоний
             console.log('▶️ Скрипт продовжено.');
-            sendTelegramMessage('▶️ Скрипт продовжено вручну.');
+        //    sendTelegramMessage('▶️ Скрипт продовжено вручну.');
             // Якщо скрипт було продовжено, перезапускаємо основний сценарій
             runMainScenario();
         }
@@ -492,7 +492,7 @@
     ];
 
     const step2Fields = [
-        [USER_CITY, true, 'radio'], // USER_CITY тепер динамічно змінюється
+       // [USER_CITY, true, 'radio'], // USER_CITY тепер динамічно змінюється
         ['s42-check-gdpr-info', true, 'checkbox'],
         ['fs13-0-travel-doc-type', '1', 'select'],
         ['fs13-travel-doc-number', USER_PASSPORT, 'text'],
@@ -734,15 +734,15 @@
 
         await wait(weightedRandomDelay(1700, 2500));
         if (isScriptStopped) return;
-        await fillFields(step2Fields, 'Step 2');
-        if (isScriptStopped) return;
+        // await fillFields(step2Fields, 'Step 2');
+        //if (isScriptStopped) return;
 
-        const submitBtn = document.getElementById('submitter1');
-        if (submitBtn) {
-            submitBtn.click();
-            console.log('🚀 "Надіслати" натиснуто');
-        }
-        console.log('✅ Step 2 завершено');
+        // const submitBtn = document.getElementById('submitter1');
+        // if (submitBtn) {
+        //     submitBtn.click();
+        //     console.log('🚀 "Надіслати" натиснуто');
+        // }
+        // console.log('✅ Step 2 завершено');
 
         await wait(1546);
         if (isScriptStopped) return;
@@ -762,6 +762,7 @@
 
         if (matchingSlot) {
             matchingSlot.click();
+            step2Fields();
             console.log('✅ Обрано слот:', matchingSlot.id);
 
             const now = new Date().toLocaleString();
