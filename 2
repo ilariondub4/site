@@ -569,7 +569,29 @@
         console.log('Скрипт зупинено, перезавантаження скасовано.');
         return;
     }
+    currentCityIndex++;
+    if (currentCityIndex < USER_CITIES.length) {
+        USER_CITY = USER_CITIES[currentCityIndex];
+        localStorage.setItem('currentCityIndex', currentCityIndex);
+        const msg = `🔁 Переходимо до наступного міста: ${USER_CITY}`;
+        console.log(msg);
+        await sendTelegramMessage(msg);
+
+        const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+        console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
+        setTimeout(() => location.reload(), reloadIn);
+    } else {
+        const msg = `🏁 Усі міста перебрано. Терміни не знайдено. Починаємо новий цикл.`;
+        console.log(msg);
+        await sendTelegramMessage(msg);
+
+        localStorage.setItem('currentCityIndex', '0');
+        const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+        console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
+        setTimeout(() => location.reload(), reloadIn);
     }
+}
+    
 
     /* ------------------------------------------------------------------
        🚀  Основний сценарій
@@ -805,28 +827,7 @@ if (matchingSlot) {
 
  
 
-    currentCityIndex++;
-    if (currentCityIndex < USER_CITIES.length) {
-        USER_CITY = USER_CITIES[currentCityIndex];
-        localStorage.setItem('currentCityIndex', currentCityIndex);
-        const msg = `🔁 Переходимо до наступного міста: ${USER_CITY}`;
-        console.log(msg);
-        await sendTelegramMessage(msg);
-
-        const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
-        console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
-        setTimeout(() => location.reload(), reloadIn);
-    } else {
-        const msg = `🏁 Усі міста перебрано. Терміни не знайдено. Починаємо новий цикл.`;
-        console.log(msg);
-        await sendTelegramMessage(msg);
-
-        localStorage.setItem('currentCityIndex', '0');
-        const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
-        console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с`);
-        setTimeout(() => location.reload(), reloadIn);
-    }
-}
+    
 
     // Запускаємо основний сценарій тільки якщо скрипт не зупинений
     if (!isScriptStopped) {
