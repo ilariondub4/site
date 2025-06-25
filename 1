@@ -760,14 +760,7 @@
         await wait(1546);
         if (isScriptStopped) return;
 
-        const allAvailableSlots = [
-            ...document.querySelectorAll('input[type="radio"][name="offices"]')
-        ].filter(el =>
-            el.id &&
-            el.id.includes(' -') &&
-            el.offsetParent !== null &&
-            !el.disabled
-        );
+
 
 
      const allSlots = [
