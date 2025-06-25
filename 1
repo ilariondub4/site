@@ -799,8 +799,7 @@ if (hasValidSlot) {
   console.log(msg);
   await sendTelegramMessage(msg);
 
-  // Перезавантаження після 3 секунд
-  setTimeout(() => location.reload(), 3000);
+            handleNoSlotsFound();
 }
     }
 
