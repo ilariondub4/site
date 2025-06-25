@@ -564,6 +564,12 @@
         }
     }
 
+     async function handleNoSlotsFound() {
+    if (isScriptStopped) {
+        console.log('Скрипт зупинено, перезавантаження скасовано.');
+        return;
+    }
+
     /* ------------------------------------------------------------------
        🚀  Основний сценарій
     ------------------------------------------------------------------ */
@@ -796,11 +802,7 @@ if (matchingSlot) {
     handleNoSlotsFound();
 }
 
-  async function handleNoSlotsFound() {
-    if (isScriptStopped) {
-        console.log('Скрипт зупинено, перезавантаження скасовано.');
-        return;
-    }
+ 
 
     currentCityIndex++;
     if (currentCityIndex < USER_CITIES.length) {
