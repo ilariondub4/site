@@ -773,27 +773,45 @@
             el.id.includes(`${USER_CITY} -`)
         );
 
-        if (matchingSlot) {
-            matchingSlot.click();
-            console.log('✅ Обрано слот:', matchingSlot.id);
+     const allSlots = [
+  ...document.querySelectorAll('input[type="radio"][name="offices"]')
+].filter(el =>
+  el.offsetParent !== null &&
+  !el.disabled
+);
 
-            const now = new Date().toLocaleString();
-            const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-            await sendTelegramMessage(msg);
-            // Тут можна додати логіку для подальших дій після знаходження слота, якщо вони є.
-            // Наприклад, натиснути кнопку для підтвердження або перейти на наступний крок.
-        } else {
-            const now = new Date().toLocaleString();
-            let msg;
-            if (allAvailableSlots.length > 0) {
-                msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-                await sendTelegramMessage(msg);
-            } else {
-                console.log('❌ Жодного доступного терміну не знайдено');
-                msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
-                await sendTelegramMessage(msg);
-            }
-        }
+const hasValidSlot = allSlots.some(el => el.id.includes(' - '));
+const matchingSlot = allSlots.find(el => el.id.includes(`${USER_CITY} -`));
+
+if (hasValidSlot) {
+  if (matchingSlot) {
+    matchingSlot.click();
+    console.log('✅ Обрано слот:', matchingSlot.id);
+
+    const now = new Date().toLocaleString();
+    const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+    await sendTelegramMessage(msg);
+  } else {
+    const now = new Date().toLocaleString();
+    const msg = `🟡 ${now}\n✔️ Є термін, але не в нашому місті. Перший: ${allSlots.find(el => el.id.includes(' - '))?.id}`;
+    await sendTelegramMessage(msg);
+  }
+
+  // Натискаємо кнопку submitter1, якщо термін знайдено
+  const submitBtn = document.getElementById('submitter1');
+  if (submitBtn) {
+    submitBtn.click();
+    console.log('🚀 "Надіслати" натиснуто');
+  }
+} else {
+  const now = new Date().toLocaleString();
+  const msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено з "-" у ID.\nМісто: ${USER_CITY}`;
+  console.log(msg);
+  await sendTelegramMessage(msg);
+
+  // Перезавантаження після 3 секунд
+  setTimeout(() => location.reload(), 3000);
+}
     }
 
     async function handleNoSlotsFound() {
