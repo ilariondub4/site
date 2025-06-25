@@ -768,18 +768,17 @@
         await wait(1546);
         if (isScriptStopped) return;
 
-        const allAvailableSlots = [
-            ...document.querySelectorAll('input[type="radio"][name="offices"]')
-        ].filter(el =>
-            el.id &&
-            // el.id.includes(' -') 
-                 const idCity = el.id.split(' -')[0].trim();
-return USER_CITIES.includes(idCity);
-                 
-                 &&
-            el.offsetParent !== null &&
-            !el.disabled
-        );
+   const allAvailableSlots = [
+    ...document.querySelectorAll('input[type="radio"][name="offices"]')
+].filter(el =>
+    el.id &&
+    // el.id.includes(' -') 
+    const idCity = el.id.split(' -')[0].trim();
+    return USER_CITIES.includes(idCity);
+    &&
+    el.offsetParent !== null &&
+    !el.disabled
+);
 
         const matchingSlot = allAvailableSlots.find(el =>
             el.id.includes(`${USER_CITY} -`)
