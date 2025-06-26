@@ -16,22 +16,24 @@
     let isScriptStopped = localStorage.getItem('isScriptStopped') === 'true' || false;
     let currentCityIndex = parseInt(localStorage.getItem('currentCityIndex') || '0', 10);
     const availableCities = ['Banská Bystrica', 'Bratislava', 'Dunajská Streda', 'Košice', 'Michalovce', 'Nitra', 'Nové Zámky', 'Prešov', 'Rimavská Sobota', 'Ružomberok', 'Trenčín', 'Trnava', 'Žilina'];
-    const USER_CITIES = JSON.parse(localStorage.getItem('USER_CITIES') || '["OCP Michalovce", "OCP Bratislava"]'); // Масив міст
+    const USER_CITIES = JSON.parse(localStorage.getItem('USER_CITIES') || '["OCP Michalovce", "OCP Košice"]'); // Масив міст
     let USER_CITY = USER_CITIES[currentCityIndex];
 
     // Оновлені константи
-    const USER_NAME = localStorage.getItem('USER_NAME') || 'Yaroslav';
-    const USER_SURNAME = localStorage.getItem('USER_SURNAME') || 'Batryn';
-    const USER_BIRTHDATE = localStorage.getItem('USER_BIRTHDATE') || '10.08.1991';
-    const USER_PHONE = localStorage.getItem('USER_PHONE') || '+421940252953';
-    const USER_EMAIL = localStorage.getItem('USER_EMAIL') || 'ivanikrakusinko1a1a10111@gmail.com';
+    const USER_NAME = localStorage.getItem('USER_NAME') || 'Karyna';
+    const USER_SURNAME = localStorage.getItem('USER_SURNAME') || 'Lukashenko';
+    const USER_BIRTHDATE = localStorage.getItem('USER_BIRTHDATE') || '25.04.2001';
+    const USER_PHONE = localStorage.getItem('USER_PHONE') || '+421940792910';
+    const USER_EMAIL = localStorage.getItem('USER_EMAIL') || 'ivanikrakusinko1a1a14@gmail.com';
     const USER_PASSPORT = 'T';
     const STEP3_SELECT_1_VALUE = localStorage.getItem('STEP3_SELECT_1_VALUE') || '242';
     const STEP3_SELECT_2_VALUE = localStorage.getItem('STEP3_SELECT_2_VALUE') || '243';
 
     const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
-    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-7oh1Zgb8SHJoFO7nXeZXpHfF-isuZOyBHLFvJV88xGD1TKvQSW_8DQQ5HwO_gv8sRK1v7PU80vT3BlbkFJ20kJ8hlvm7DDim-90js6HfRAWw92evngeZpsuCQhke1Va4OOUrZIGLtohYxRpaEZ5FA_Xj7ygAA';
-    const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_WWWImdcpG5yV58xSokbj5nbm';
+    //    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4'];
+
+    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-DrPd6useWYWoluXGyEh-oY8XRa-Ml5cNSIGcvHmnmPozs76jGl8Lgwvn-VauOPqeOkeTGBaQD5T3BlbkFJp6CWJ9yPuOPqcj5TeBQ74OCgp96PxirIQupiSpSKVUbRLSABPHzUSdo41gW-YlmY5O-g4KujQAA';
+    const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_NtHUbQd0hgmD2cIO6zb7VRUj';
     const TELEGRAM_BOT_TOKEN = localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
     const TELEGRAM_CHAT_ID = localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A';
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
@@ -564,6 +566,45 @@
         }
     }
 
+    // 1. Функція з паузою на 3.5с + ручне підтвердження
+async function waitWithPauseOption(ms = 3500) {
+    return new Promise((resolve) => {
+        // Створюємо елемент повідомлення
+        const pauseBox = document.createElement('div');
+        pauseBox.id = 'pauseBox';
+        pauseBox.innerHTML = `
+            <div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fffae6;padding:15px;border:1px solid #ccc;border-radius:8px;z-index:9999;font-family:sans-serif;">
+                ⏳ Продовжити автоматично через ${Math.floor(ms/1000)}с або <button id="pauseNowBtn">Пауза</button>
+            </div>
+        `;
+        document.body.appendChild(pauseBox);
+
+        let paused = false;
+
+        // Якщо натиснули "Пауза" — ставимо флаг
+        document.getElementById('pauseNowBtn').onclick = () => {
+            paused = true;
+            pauseBox.innerHTML = `
+                <div style="background:#d9edf7;padding:15px;border:1px solid #bce8f1;border-radius:8px;">
+                    ⏸️ Пауза активна. Натисніть <button id="continueBtn">Продовжити</button>
+                </div>
+            `;
+            document.getElementById('continueBtn').onclick = () => {
+                document.getElementById('pauseBox')?.remove();
+                resolve();
+            };
+        };
+
+        // Таймер: якщо не натиснули — продовжуємо
+        setTimeout(() => {
+            if (!paused) {
+                document.getElementById('pauseBox')?.remove();
+                resolve();
+            }
+        }, ms);
+    });
+}
+
     /* ------------------------------------------------------------------
        🚀  Основний сценарій
     ------------------------------------------------------------------ */
@@ -656,12 +697,6 @@
             return;
         }
 
-        // Модифікуємо обробник подій, щоб він спрацьовував тільки після заповнення PIN-коду
-        // або інших необхідних кроків, які ведуть до появи селектів.
-        // Це трохи змінить оригінальну логіку, де listener додавався одразу.
-        // Замість listener'а, який очікує зміни, ми просто виконаємо логіку після
-        // того, як елементи з'являться і буде встановлений PIN.
-
         // 4️⃣ PIN-код → довантажуємо selects
         let odoslatClicked = false;
 
@@ -713,9 +748,10 @@
                     console.log('✅ select1 встановлено');
                 }
 
-                await wait(2260);
+                await waitWithPauseOption(3500);
                 if (isScriptStopped) return;
 
+               
                 const select2 = document.getElementById('f1-life-situation-select2');
                 const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
                 if (option2) {
@@ -734,51 +770,40 @@
 
         await wait(weightedRandomDelay(1700, 2500));
         if (isScriptStopped) return;
-        // await fillFields(step2Fields, 'Step 2');
-        //if (isScriptStopped) return;
 
-        // const submitBtn = document.getElementById('submitter1');
-        // if (submitBtn) {
-        //     submitBtn.click();
-        //     console.log('🚀 "Надіслати" натиснуто');
-        // }
-        // console.log('✅ Step 2 завершено');
 
         await wait(1546);
         if (isScriptStopped) return;
 
-        const allAvailableSlots = [
-            ...document.querySelectorAll('input[type="radio"][name="offices"]')
-        ].filter(el =>
-            el.id &&
-            el.id.includes(' -') &&
-            el.offsetParent !== null &&
-            !el.disabled
-        );
+      const allAvailableSlots = [
+    ...document.querySelectorAll('input[type="radio"][name="offices"]')
+].filter(el =>
+    el.id &&
+    el.id.includes(' -') &&
+    el.offsetParent !== null &&
+    !el.disabled
+);
 
-        const matchingSlot = allAvailableSlots.find(el =>
-            el.id.includes(`${USER_CITY} -`)
-        );
+// Шукаємо перший слот, який належить до якогось з наших USER_CITIES
+let selectedSlot = null;
+let selectedCity = null;
 
-      //  if (matchingSlot) {
-        //    matchingSlot.click();
-          //  console.log('✅ Обрано слот:', matchingSlot.id);
+for (const city of USER_CITIES) {
+    selectedSlot = allAvailableSlots.find(el => el.id.includes(`${city} -`));
+    if (selectedSlot) {
+        selectedCity = city;
+        break;
+    }
+}
 
- //           const now = new Date().toLocaleString();
-   //         const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-     //       await sendTelegramMessage(msg);
-            // Тут можна додати логіку для подальших дій після знаходження слота, якщо вони є.
-            // Наприклад, натиснути кнопку для підтвердження або перейти на наступний крок.
-        //}
-        if (matchingSlot) {
-    matchingSlot.click();
-    console.log('✅ Обрано слот:', matchingSlot.id);
+if (selectedSlot) {
+    selectedSlot.click();
+    console.log('✅ Обрано слот:', selectedSlot.id);
 
     const now = new Date().toLocaleString();
-    const msg = `🟢 ${now}\n✅ Знайдено в нашому місті:\n${matchingSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+    const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
     await sendTelegramMessage(msg);
 
-    // Додано: чекаємо та заповнюємо Step 2
     await wait(weightedRandomDelay(700, 1200));
     await fillFields(step2Fields, 'Step 2');
 
@@ -788,25 +813,19 @@
         console.log('🚀 "Надіслати" натиснуто');
     }
     console.log('✅ Step 2 завершено');
+} else {
+    // Жодного з наших міст немає серед доступних термінів
+    const now = new Date().toLocaleString();
+    let msg = '';
+    if (allAvailableSlots.length > 0) {
+        msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (НЕ наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+    } else {
+        msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено серед наших міст (${USER_CITIES.join(', ')}).`;
+    }
+    await sendTelegramMessage(msg);
+    handleNoSlotsFound();
+    return; // Далі не йдемо!
 }
-        else {
-            const now = new Date().toLocaleString();
-            let msg;
-            if (allAvailableSlots.length > 0) {
-                msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (не наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-                await sendTelegramMessage(msg);
-                 await wait(weightedRandomDelay(700, 1200));
-
-            await fillFields(step2Fields, 'Step 2');
-                console.log('Finish!!!');
-
-            } else {
-                console.log('❌ Жодного доступного терміну не знайдено');
-                msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено в місті: ${USER_CITY}.`;
-                await sendTelegramMessage(msg);
-            }
-            handleNoSlotsFound();
-        }
     }
 
     async function handleNoSlotsFound() {
