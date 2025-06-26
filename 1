@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        Universal main
+// @name        Universal main 
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -9,34 +9,75 @@
 // @run-at      document-end
 // ==/UserScript==
 
-(function () {
+// Пристрій
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'A1';
+
+async function fetchConfigFromServer(id) {
+    try {
+        const res = await fetch(`http://localhost:8080/api/config/${id}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Server error " + res.status);
+        const data = await res.json();
+        if (!data.USER_NAME || !data.USER_SURNAME) throw new Error("Broken config");
+        localStorage.setItem('userConfigBackup', JSON.stringify(data));
+        return data;
+    } catch (e) {
+        console.warn('⚠️ Сервер недоступний або повернув помилку:', e.message);
+        return null;
+    }
+}
+
+async function getUserConfig(id) {
+    let cfg = await fetchConfigFromServer(id);
+    cfg = cfg || JSON.parse(localStorage.getItem('userConfigBackup') || '{}');
+    return {
+        USER_NAME: localStorage.getItem('USER_NAME') || cfg.USER_NAME || 'Ihor',
+        USER_SURNAME: localStorage.getItem('USER_SURNAME') || cfg.USER_SURNAME || 'Hrysha',
+        USER_BIRTHDATE: localStorage.getItem('USER_BIRTHDATE') || cfg.USER_BIRTHDATE || '30.03.1988',
+        USER_PHONE: localStorage.getItem('USER_PHONE') || cfg.USER_PHONE || '+421940252953',
+        USER_EMAIL: localStorage.getItem('USER_EMAIL') || cfg.USER_EMAIL || 'ivanikrakusinko1a1a19@gmail.com',
+        USER_CITIES: JSON.parse(localStorage.getItem('USER_CITIES') || JSON.stringify(cfg.USER_CITIES || ["OCP Michalovce", "OCP Košice"])),
+        STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || cfg.STEP3_SELECT_1_VALUE || '242',
+        STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || cfg.STEP3_SELECT_2_VALUE || '243',
+        // --- Ключі ЖОРСТКО! ---
+        OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-KF53fI1rsyP1-yhoRHEpaAUojQOyUjXXa1nTqUlONxzV_nVctp1do8Ynnndoi9EjznU6dpq1fkT3BlbkFJcl1f80V_6_y0cTZFT8MTMr7vyaXChfQxePiNi5WhbTcFKuB-B3juvQzorYc_9CitClUomvw24AA',
+        OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_i1jauovjNFo9CAZCUX8JmTwx',
+        TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA',
+        TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A',
+    };
+}
+
+(async function () {
     'use strict';
 
-    // Глобальна змінна для керування зупинкою/продовженням скрипта
+    // Налаштування стану і міста
     let isScriptStopped = localStorage.getItem('isScriptStopped') === 'true' || false;
     let currentCityIndex = parseInt(localStorage.getItem('currentCityIndex') || '0', 10);
     const availableCities = ['Banská Bystrica', 'Bratislava', 'Dunajská Streda', 'Košice', 'Michalovce', 'Nitra', 'Nové Zámky', 'Prešov', 'Rimavská Sobota', 'Ružomberok', 'Trenčín', 'Trnava', 'Žilina'];
-    const USER_CITIES = JSON.parse(localStorage.getItem('USER_CITIES') || '["OCP Michalovce", "OCP Košice"]'); // Масив міст
+
+    // --- З config (тільки тут!)
+    const config1 = await getUserConfig(DEVICE_ID);
+
+    const USER_CITIES = config1.USER_CITIES;
     let USER_CITY = USER_CITIES[currentCityIndex];
-
-    // Оновлені константи
-    const USER_NAME = localStorage.getItem('USER_NAME') || 'Ihor';
-    const USER_SURNAME = localStorage.getItem('USER_SURNAME') || 'Hrysha';
-    const USER_BIRTHDATE = localStorage.getItem('USER_BIRTHDATE') || '30.03.1988';
-    const USER_PHONE = localStorage.getItem('USER_PHONE') || '+421940252953';
-    const USER_EMAIL = localStorage.getItem('USER_EMAIL') || 'ivanikrakusinko1a1a19@gmail.com';
-    const USER_PASSPORT = 'T';
-    const STEP3_SELECT_1_VALUE = localStorage.getItem('STEP3_SELECT_1_VALUE') || '242';
-    const STEP3_SELECT_2_VALUE = localStorage.getItem('STEP3_SELECT_2_VALUE') || '243';
-
-    //const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
-        const OPENAI_MODELS = ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4'];
-
-    const OPENAI_API_KEY = localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-KF53fI1rsyP1-yhoRHEpaAUojQOyUjXXa1nTqUlONxzV_nVctp1do8Ynnndoi9EjznU6dpq1fkT3BlbkFJcl1f80V_6_y0cTZFT8MTMr7vyaXChfQxePiNi5WhbTcFKuB-B3juvQzorYc_9CitClUomvw24AA';
-    const OPENAI_PROJECT_ID = localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_i1jauovjNFo9CAZCUX8JmTwx';
-    const TELEGRAM_BOT_TOKEN = localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
-    const TELEGRAM_CHAT_ID = localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A';
+    const USER_NAME = config1.USER_NAME;
+    const USER_SURNAME = config1.USER_SURNAME;
+    const USER_BIRTHDATE = config1.USER_BIRTHDATE;
+    const USER_PHONE = config1.USER_PHONE;
+    const USER_EMAIL = config1.USER_EMAIL;
+    const STEP3_SELECT_1_VALUE = config1.STEP3_SELECT_1_VALUE;
+    const STEP3_SELECT_2_VALUE = config1.STEP3_SELECT_2_VALUE;
+    const OPENAI_API_KEY = config1.OPENAI_API_KEY;
+    const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
+    const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
+    const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
+    const USER_PASSPORT = 'T'; // просто окремо тут
+    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
+
+    // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
+
+
+
 
     window.addEventListener('load', () => {
         const btn = document.createElement('button');
@@ -193,6 +234,8 @@
         const r = (Math.random() + Math.random()) / 2; // 0–1  пік ≈0.5
         return Math.round(min + (max - min) * r);
     }
+
+
 
     let lastMessageId = 0;
 
@@ -751,7 +794,7 @@ async function waitWithPauseOption(ms = 3500) {
                 await waitWithPauseOption(3500);
                 if (isScriptStopped) return;
 
-               
+
                 const select2 = document.getElementById('f1-life-situation-select2');
                 const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
                 if (option2) {
@@ -819,8 +862,6 @@ if (selectedSlot) {
     let msg = '';
     if (allAvailableSlots.length > 0) {
         msg = `🟡 ${now}\n✔️ Знайдено хоча б один термін (НЕ наше місто):\n${allAvailableSlots[0].id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-    } else {
-        msg = `🔴 ${now}\n❌ Жодного доступного терміну не знайдено серед наших міст (${USER_CITIES.join(', ')}).`;
     }
     await sendTelegramMessage(msg);
     handleNoSlotsFound();
