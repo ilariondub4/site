@@ -16,13 +16,13 @@
     let isScriptStopped = localStorage.getItem('isScriptStopped') === 'true' || false;
     let currentCityIndex = parseInt(localStorage.getItem('currentCityIndex') || '0', 10);
     const availableCities = ['Banská Bystrica', 'Bratislava', 'Dunajská Streda', 'Košice', 'Michalovce', 'Nitra', 'Nové Zámky', 'Prešov', 'Rimavská Sobota', 'Ružomberok', 'Trenčín', 'Trnava', 'Žilina'];
-    const USER_CITIES = JSON.parse(localStorage.getItem('USER_CITIES') || '["OCP Michalovce", "OCP Bratislava"]'); // Масив міст
+    const USER_CITIES = JSON.parse(localStorage.getItem('USER_CITIES') || '["OCP Michalovce", "OCP Košice"]'); // Масив міст
     let USER_CITY = USER_CITIES[currentCityIndex];
 
     // Оновлені константи
-    const USER_NAME = localStorage.getItem('USER_NAME') || 'Yaroslav';
-    const USER_SURNAME = localStorage.getItem('USER_SURNAME') || 'Batryn';
-    const USER_BIRTHDATE = localStorage.getItem('USER_BIRTHDATE') || '10.08.1991';
+    const USER_NAME = localStorage.getItem('USER_NAME') || 'Karyna';
+    const USER_SURNAME = localStorage.getItem('USER_SURNAME') || 'Lukashenko';
+    const USER_BIRTHDATE = localStorage.getItem('USER_BIRTHDATE') || '25.04.2001';
     const USER_PHONE = localStorage.getItem('USER_PHONE') || '+421940792910';
     const USER_EMAIL = localStorage.getItem('USER_EMAIL') || 'ivanikrakusinko1a1a14@gmail.com';
     const USER_PASSPORT = 'T';
