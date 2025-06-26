@@ -564,6 +564,45 @@
         }
     }
 
+    // 1. Функція з паузою на 3.5с + ручне підтвердження
+async function waitWithPauseOption(ms = 3500) {
+    return new Promise((resolve) => {
+        // Створюємо елемент повідомлення
+        const pauseBox = document.createElement('div');
+        pauseBox.id = 'pauseBox';
+        pauseBox.innerHTML = `
+            <div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#fffae6;padding:15px;border:1px solid #ccc;border-radius:8px;z-index:9999;font-family:sans-serif;">
+                ⏳ Продовжити автоматично через ${Math.floor(ms/1000)}с або <button id="pauseNowBtn">Пауза</button>
+            </div>
+        `;
+        document.body.appendChild(pauseBox);
+
+        let paused = false;
+
+        // Якщо натиснули "Пауза" — ставимо флаг
+        document.getElementById('pauseNowBtn').onclick = () => {
+            paused = true;
+            pauseBox.innerHTML = `
+                <div style="background:#d9edf7;padding:15px;border:1px solid #bce8f1;border-radius:8px;">
+                    ⏸️ Пауза активна. Натисніть <button id="continueBtn">Продовжити</button>
+                </div>
+            `;
+            document.getElementById('continueBtn').onclick = () => {
+                document.getElementById('pauseBox')?.remove();
+                resolve();
+            };
+        };
+
+        // Таймер: якщо не натиснули — продовжуємо
+        setTimeout(() => {
+            if (!paused) {
+                document.getElementById('pauseBox')?.remove();
+                resolve();
+            }
+        }, ms);
+    });
+}
+
     /* ------------------------------------------------------------------
        🚀  Основний сценарій
     ------------------------------------------------------------------ */
@@ -707,10 +746,10 @@
                     console.log('✅ select1 встановлено');
                 }
 
-                await wait(2260);
+                await waitWithPauseOption(3500);
                 if (isScriptStopped) return;
-                await wait(700);
 
+               
                 const select2 = document.getElementById('f1-life-situation-select2');
                 const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
                 if (option2) {
