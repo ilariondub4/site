@@ -22,7 +22,7 @@ async function isDeviceEnabled(deviceId) {
     }
 }
 
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'B1';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C1';
 
 async function fetchConfigFromServer(id) {
     try {
@@ -61,14 +61,14 @@ async function getUserConfig(id) {
         USER_NAME: localStorage.getItem('USER_NAME') || cfg.USER_NAME || 'Ihor',
         USER_SURNAME: localStorage.getItem('USER_SURNAME') || cfg.USER_SURNAME || 'Hrysha',
         USER_BIRTHDATE: localStorage.getItem('USER_BIRTHDATE') || cfg.USER_BIRTHDATE || '30.03.1988',
-        USER_PHONE: localStorage.getItem('USER_PHONE') || cfg.USER_PHONE || '+421940792910',
-        USER_EMAIL: localStorage.getItem('USER_EMAIL') || cfg.USER_EMAIL || 'ivanikrakusinko1a1a14@gmail.com',
+        USER_PHONE: localStorage.getItem('USER_PHONE') || cfg.USER_PHONE || '+421944872574',
+        USER_EMAIL: localStorage.getItem('USER_EMAIL') || cfg.USER_EMAIL || 'ivanikrakusinko1a1a13@gmail.com',
         USER_CITIES: JSON.parse(localStorage.getItem('USER_CITIES') || JSON.stringify(cfg.USER_CITIES || ["OCP Michalovce", "OCP Košice"])),
         STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || cfg.STEP3_SELECT_1_VALUE || '242',
         STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || cfg.STEP3_SELECT_2_VALUE || '243',
         // --- Ключі ЖОРСТКО! ---
-        OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-fpypPuxNQN_pcQtGhCuknrxrtS2kwL0myYodgz9-mD9mZtlfaN_74PKKE-4jwi73M9u12JJq-1T3BlbkFJI9SvN9skDLTd6BH4k_LQKFKJC6p7FdxNyA3zBqJFYs1IVUB0zoZ4L0tr5PEeERyxA7g1zFxDgAA',
-        OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_i1jauovjNFo9CAZCUX8JmTwxA',
+        OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-Kqta0Pf1UU7OjwA277lJu6l29CIcXEXPGSX0WrGA9lqzPG1ZT_51XMfPyYziU5ArYvEkF8OQ3ET3BlbkFJHTpmDQg2-4jvhuT0ajZN43Nms-l38mf5uO-R6wNjJPT-tYQW7NLMN9ELs0hzDvrNTpJhqj2KUAA',
+        OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_WWWImdcpG5yV58xSokbj5nbmA',
         TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA',
         TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A',
     };
