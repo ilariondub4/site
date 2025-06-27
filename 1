@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        Universal main 
+// @name        Universal main  
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -13,8 +13,8 @@
 
 async function isDeviceEnabled(deviceId) {
     try {
-        const res = await fetch(`http://127.0.0.1:8080/api/config/${deviceId}`);
-        const data = await res.json();
+      const res1 = await fetch(`${BASE_URL}/api/config/${deviceId}`);
+      const data = await res1.json();
         return data.enabled !== false;
     } catch (err) {
         console.warn('❌ Неможливо перевірити активність пристрою. Вважаємо активним.');
@@ -22,15 +22,63 @@ async function isDeviceEnabled(deviceId) {
     }
 }
 
+// ==UserScript==
+// ... ваші @-директиви
+// ==/UserScript==
+
+// ============================================
+// КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
+// ============================================
 const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'D1';
+const BASE_URL = "https://manager-term.fly.dev";
+
+// Дані користувача за замовчуванням
+const DEFAULT_USER_NAME = 'Ihor';
+const DEFAULT_USER_SURNAME = 'Hrysha';
+const DEFAULT_USER_BIRTHDATE = '30.03.1988';
+const DEFAULT_USER_PHONE = '+421940242973';
+const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a20@gmail.com';
+const DEFAULT_USER_CITIES = ["OCP Michalovce", "OCP Košice"]; // Зберігаємо як масив
+
+// Значення для форми за замовчуванням
+const DEFAULT_STEP3_SELECT_1_VALUE = '242';
+const DEFAULT_STEP3_SELECT_2_VALUE = '243';
+
+// Ключі API (жорстко задані)
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-WU5FuJFJdeIxTCJU5yzeizuudDpp27PjC541vGLRQd5Wu00-CngQqvI3QyQKIkGALf_y0Rr2R2T3BlbkFJfdbRDFwsw43jhzd3ng9DRXuj5pjGXZJrXQzxETxtQ-Ydx_QX0-KYSpJC7b8JA91ISsKoS3nIEAA';
+const DEFAULT_OPENAI_PROJECT_ID = 'proj_i1jauovjNFo9CAZCUX8JmTwxA';
+const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
+const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
+
+// ... решта вашого коду ...
+
+function saveConfigToLocalStorage(config) {
+    localStorage.setItem('USER_NAME', config.USER_NAME || '');
+    localStorage.setItem('USER_SURNAME', config.USER_SURNAME || '');
+    localStorage.setItem('USER_BIRTHDATE', config.USER_BIRTHDATE || '');
+    localStorage.setItem('USER_PHONE', config.USER_PHONE || '');
+    localStorage.setItem('USER_EMAIL', config.USER_EMAIL || '');
+    localStorage.setItem('USER_CITIES', JSON.stringify(config.USER_CITIES || []));
+    localStorage.setItem('STEP3_SELECT_1_VALUE', config.STEP3_SELECT_1_VALUE || '');
+    localStorage.setItem('STEP3_SELECT_2_VALUE', config.STEP3_SELECT_2_VALUE || '');
+    // Ключі API теж можна оновлювати, якщо вони приходять з сервера
+    if (config.OPENAI_API_KEY) localStorage.setItem('OPENAI_API_KEY', config.OPENAI_API_KEY);
+    if (config.OPENAI_PROJECT_ID) localStorage.setItem('OPENAI_PROJECT_ID', config.OPENAI_PROJECT_ID);
+    if (config.TELEGRAM_BOT_TOKEN) localStorage.setItem('TELEGRAM_BOT_TOKEN', config.TELEGRAM_BOT_TOKEN);
+    if (config.TELEGRAM_CHAT_ID) localStorage.setItem('TELEGRAM_CHAT_ID', config.TELEGRAM_CHAT_ID);
+
+    // Також оновлюємо резервну копію
+    localStorage.setItem('userConfigBackup', JSON.stringify(config));
+}
+
 
 async function fetchConfigFromServer(id) {
     try {
-        const res = await fetch(`http://localhost:8080/api/config/${id}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("Server error " + res.status);
-        const data = await res.json();
+        const res2 = await fetch(`${BASE_URL}/api/config/${id}`, { cache: "no-store" });
+        if (!res2.ok) throw new Error("Server error " + res2.status);
+        const data = await res2.json();
         if (!data.USER_NAME || !data.USER_SURNAME) throw new Error("Broken config");
-        localStorage.setItem('userConfigBackup', JSON.stringify(data));
+        saveConfigToLocalStorage(data);
         return data;
     } catch (e) {
         console.warn('⚠️ Сервер недоступний або повернув помилку:', e.message);
@@ -57,54 +105,58 @@ async function getUserConfig(id) {
         cfg = JSON.parse(localStorage.getItem('userConfigBackup') || '{}');
     }
 
-    return {
-        USER_NAME: localStorage.getItem('USER_NAME') || cfg.USER_NAME || 'Ihor',
-        USER_SURNAME: localStorage.getItem('USER_SURNAME') || cfg.USER_SURNAME || 'Hrysha',
-        USER_BIRTHDATE: localStorage.getItem('USER_BIRTHDATE') || cfg.USER_BIRTHDATE || '30.03.1988',
-        USER_PHONE: localStorage.getItem('USER_PHONE') || cfg.USER_PHONE || '+421940242973',
-        USER_EMAIL: localStorage.getItem('USER_EMAIL') || cfg.USER_EMAIL || 'ivanikrakusinko1a1a20@gmail.com',
-        USER_CITIES: JSON.parse(localStorage.getItem('USER_CITIES') || JSON.stringify(cfg.USER_CITIES || ["OCP Michalovce", "OCP Košice"])),
-        STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || cfg.STEP3_SELECT_1_VALUE || '242',
-        STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || cfg.STEP3_SELECT_2_VALUE || '243',
-        // --- Ключі ЖОРСТКО! ---
-        OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || 'sk-proj-ZW1Dc-rOc2FeAodiC8T4Cy9upNuvDo1ZKQ98XSvOfTvh_2yIzfDZeLhtkIjclKFoBENnC41797T3BlbkFJNn56YaHpSce_ghNiD-_-fB5G0-igH5XeT6gXpOwxoocAX6F7pXl2KNhucKvh4S6_bILuLD21oAA',
-        OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || 'proj_WWWImdcpG5yV58xSokbj5nbmA',
-        TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA',
-        TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || '814270232A',
-    };
+ return {
+    USER_NAME: localStorage.getItem('USER_NAME') || cfg.USER_NAME || DEFAULT_USER_NAME,
+    USER_SURNAME: localStorage.getItem('USER_SURNAME') || cfg.USER_SURNAME || DEFAULT_USER_SURNAME,
+    USER_BIRTHDATE: localStorage.getItem('USER_BIRTHDATE') || cfg.USER_BIRTHDATE || DEFAULT_USER_BIRTHDATE,
+    USER_PHONE: localStorage.getItem('USER_PHONE') || cfg.USER_PHONE || DEFAULT_USER_PHONE,
+    USER_EMAIL: localStorage.getItem('USER_EMAIL') || cfg.USER_EMAIL || DEFAULT_USER_EMAIL,
+    USER_CITIES: JSON.parse(localStorage.getItem('USER_CITIES') || JSON.stringify(cfg.USER_CITIES || DEFAULT_USER_CITIES)),
+    STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || cfg.STEP3_SELECT_1_VALUE || DEFAULT_STEP3_SELECT_1_VALUE,
+    STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || cfg.STEP3_SELECT_2_VALUE || DEFAULT_STEP3_SELECT_2_VALUE,
+    // --- Ключі ---
+    OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY,
+    OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || DEFAULT_OPENAI_PROJECT_ID,
+    TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || DEFAULT_TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || DEFAULT_TELEGRAM_CHAT_ID,
+};
 }
+
+
+
+
+
+async function confirmLoadServerConfig(timeout = 5000) {
+    return new Promise((resolve) => {
+        const box = document.createElement('div');
+        box.innerHTML = `
+            <div style="position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:#fff;padding:22px 32px;border-radius:14px;box-shadow:0 8px 36px rgba(0,0,0,0.16);text-align:center;">
+                <h2>Взяти дані з сервера?</h2>
+                <p>Підтвердіть <b>Так</b> протягом 5 секунд.<br>Інакше скрипт продовжиться з localStorage.</p>
+                <button id="server_yes" style="padding:8px 24px;margin-right:18px;background:#4caf50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:1.1em;">Так</button>
+            </div>
+        `;
+        document.body.appendChild(box);
+
+        let resolved = false;
+        document.getElementById('server_yes').onclick = () => {
+            resolved = true;
+            box.remove();
+            resolve(true);
+        };
+
+        setTimeout(() => {
+            if (!resolved) {
+                box.remove();
+                resolve(false);
+            }
+        }, timeout);
+    });
+}
+
 
 (async function () {
     'use strict';
-
-    // Налаштування стану і міста
-    let isScriptStopped = localStorage.getItem('isScriptStopped') === 'true' || false;
-    let currentCityIndex = parseInt(localStorage.getItem('currentCityIndex') || '0', 10);
-    const availableCities = ['Banská Bystrica', 'Bratislava', 'Dunajská Streda', 'Košice', 'Michalovce', 'Nitra', 'Nové Zámky', 'Prešov', 'Rimavská Sobota', 'Ružomberok', 'Trenčín', 'Trnava', 'Žilina'];
-
-    // --- З config (тільки тут!)
-    const config1 = await getUserConfig(DEVICE_ID);
-
-    const USER_CITIES = config1.USER_CITIES;
-    let USER_CITY = USER_CITIES[currentCityIndex];
-    const USER_NAME = config1.USER_NAME;
-    const USER_SURNAME = config1.USER_SURNAME;
-    const USER_BIRTHDATE = config1.USER_BIRTHDATE;
-    const USER_PHONE = config1.USER_PHONE;
-    const USER_EMAIL = config1.USER_EMAIL;
-    const STEP3_SELECT_1_VALUE = config1.STEP3_SELECT_1_VALUE;
-    const STEP3_SELECT_2_VALUE = config1.STEP3_SELECT_2_VALUE;
-    const OPENAI_API_KEY = config1.OPENAI_API_KEY;
-    const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
-    const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
-    const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
-    const USER_PASSPORT = 'T'; // просто окремо тут
-    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4'];
-    const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
-
-    // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
-
-
 
 
     window.addEventListener('load', () => {
@@ -220,6 +272,56 @@ async function getUserConfig(id) {
             runMainScenario();
         }
     }
+
+
+    // Налаштування стану і міста
+    let isScriptStopped = localStorage.getItem('isScriptStopped') === 'true' || false;
+    let currentCityIndex = parseInt(localStorage.getItem('currentCityIndex') || '0', 10);
+    const availableCities = ['Banská Bystrica', 'Bratislava', 'Dunajská Streda', 'Košice', 'Michalovce', 'Nitra', 'Nové Zámky', 'Prešov', 'Rimavská Sobota', 'Ružomberok', 'Trenčín', 'Trnava', 'Žilina'];
+
+    // --- З config (тільки тут!)
+    // const config1 = await getUserConfig(DEVICE_ID);
+   const useServerConfig = await confirmLoadServerConfig(5000);
+
+let config1;
+if (useServerConfig) {
+    config1 = await getUserConfig(DEVICE_ID);
+} else {
+config1 = {
+    USER_NAME: localStorage.getItem('USER_NAME') || DEFAULT_USER_NAME,
+    USER_SURNAME: localStorage.getItem('USER_SURNAME') || DEFAULT_USER_SURNAME,
+    USER_BIRTHDATE: localStorage.getItem('USER_BIRTHDATE') || DEFAULT_USER_BIRTHDATE,
+    USER_PHONE: localStorage.getItem('USER_PHONE') || DEFAULT_USER_PHONE,
+    USER_EMAIL: localStorage.getItem('USER_EMAIL') || DEFAULT_USER_EMAIL,
+    USER_CITIES: JSON.parse(localStorage.getItem('USER_CITIES') || JSON.stringify(DEFAULT_USER_CITIES)),
+    STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || DEFAULT_STEP3_SELECT_1_VALUE,
+    STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || DEFAULT_STEP3_SELECT_2_VALUE,
+    // --- Ключі ---
+    OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY,
+    OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || DEFAULT_OPENAI_PROJECT_ID,
+    TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || DEFAULT_TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || DEFAULT_TELEGRAM_CHAT_ID,
+};
+}
+
+   const USER_CITIES = config1.USER_CITIES;
+    let USER_CITY = USER_CITIES[currentCityIndex];
+    const USER_NAME = config1.USER_NAME;
+    const USER_SURNAME = config1.USER_SURNAME;
+    const USER_BIRTHDATE = config1.USER_BIRTHDATE;
+    const USER_PHONE = config1.USER_PHONE;
+    const USER_EMAIL = config1.USER_EMAIL;
+    const STEP3_SELECT_1_VALUE = config1.STEP3_SELECT_1_VALUE;
+    const STEP3_SELECT_2_VALUE = config1.STEP3_SELECT_2_VALUE;
+    const OPENAI_API_KEY = config1.OPENAI_API_KEY;
+    const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
+    const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
+    const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
+    const USER_PASSPORT = 'T'; // просто окремо тут
+    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4'];
+    const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
+
+    // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
 
     /* ------------------------------------------------------------------
        ⚙️  Налаштування «human-like» пауз
