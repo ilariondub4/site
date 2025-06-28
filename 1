@@ -29,15 +29,15 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'A1';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'A2';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
 const DEFAULT_USER_NAME = 'Ihor';
 const DEFAULT_USER_SURNAME = 'Hrysha';
 const DEFAULT_USER_BIRTHDATE = '30.03.1988';
-const DEFAULT_USER_PHONE = '+421940252953';
-const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a19@gmail.com';
+const DEFAULT_USER_PHONE = '+421944872574';
+const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a13@gmail.com';
 const DEFAULT_USER_CITIES = ["OCP Michalovce", "OCP Košice"]; // Зберігаємо як масив
 
 // Значення для форми за замовчуванням
@@ -45,7 +45,7 @@ const DEFAULT_STEP3_SELECT_1_VALUE = '242';
 const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-yABRolzSTNMNekLgUfRuiNbcKspmTbP4wczM_ZcAHHt1Y8n9XGPisuaZUq_TI6g2iHgm6W71jcT3BlbkFJnUui37zSGOhqejb2HyoknSChPThXI4MUtq6F_-gYgD5wrMzwuVwkeICwIerGijjvDm4M6g5nwAA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-k--sE_aCqFTAari7PvrA0ySjPZmYBOTJcdR8Di5DdXU8xlwNw2Ns9l_mj4Y3q-iujGMcx_fdj7T3BlbkFJ9ooB4o3srruH8AIg-SbOYhWpM4dRz15WfxRlPqCIJFXrkIvpw6c3YsS2ubFWvmQb-p_wE5tscAA';
 const DEFAULT_OPENAI_PROJECT_ID = 'proj_i1jauovjNFo9CAZCUX8JmTwxA';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
@@ -318,7 +318,7 @@ config1 = {
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
     const USER_PASSPORT = 'T'; // просто окремо тут
-    const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1', 'gpt-4.1-mini', 'gpt-4'];
+    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
     // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
