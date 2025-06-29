@@ -456,7 +456,7 @@
         'residence-address-municipality-0': 2000,
         'residence-address-street-0': 2000,
         'fs13-0-travel-doc-type': 500,
-        's42-check-gdpr-info': 1000,
+        's42-check-gdpr-info': 700,
         submitter1: 650,
     };
 
