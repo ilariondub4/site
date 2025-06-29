@@ -29,7 +29,7 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C1';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C2';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
@@ -318,7 +318,7 @@ config1 = {
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
     const USER_PASSPORT = 'T'; // просто окремо тут
-    const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4'];
+    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
     // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
