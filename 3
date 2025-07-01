@@ -29,15 +29,15 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'D1';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C2';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
 const DEFAULT_USER_NAME = 'Ihor';
 const DEFAULT_USER_SURNAME = 'Hrysha';
 const DEFAULT_USER_BIRTHDATE = '30.03.1988';
-const DEFAULT_USER_PHONE = '+421940242973';
-const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a20@gmail.com';
+const DEFAULT_USER_PHONE = '+421940727546';
+const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a17@gmail.com';
 const DEFAULT_USER_CITIES = ["OCP Michalovce", "OCP Košice"]; // Зберігаємо як масив
 
 // Значення для форми за замовчуванням
@@ -45,8 +45,8 @@ const DEFAULT_STEP3_SELECT_1_VALUE = '242';
 const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-WU5FuJFJdeIxTCJU5yzeizuudDpp27PjC541vGLRQd5Wu00-CngQqvI3QyQKIkGALf_y0Rr2R2T3BlbkFJfdbRDFwsw43jhzd3ng9DRXuj5pjGXZJrXQzxETxtQ-Ydx_QX0-KYSpJC7b8JA91ISsKoS3nIEAA';
-const DEFAULT_OPENAI_PROJECT_ID = 'proj_i1jauovjNFo9CAZCUX8JmTwxA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-tAI05uKgscI-pbjTtBhwKWWJzO4Hu2J5x8fSdz-FeKyrNXJ9SRnkQ3dEfRPVe4BXSyCdfIu0BVT3BlbkFJz4IMD2ySwtgjmOWJG24G9AEHD_fg0UWUOo3lyjg5KSxzXRp45mkqSzDIB6_j9B6raC3gN_AJEAA';
+const DEFAULT_OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUjA';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
 
@@ -318,7 +318,7 @@ config1 = {
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
     const USER_PASSPORT = 'T'; // просто окремо тут
-    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4'];
+    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
     // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
@@ -1010,13 +1010,13 @@ if (selectedSlot) {
             USER_CITY = USER_CITIES[currentCityIndex];
             localStorage.setItem('currentCityIndex', currentCityIndex);
             console.log(`🔄 Переходимо до наступного міста: ${USER_CITY}`);
-            const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для спроби наступного міста`);
             setTimeout(() => location.reload(), reloadIn);
         } else {
             console.log('🏁 Усі міста перебрано, терміни не знайдено. Починаємо спочатку.');
             localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс для початку циклу знову
-            const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для початку нового циклу міст`);
             setTimeout(() => location.reload(), reloadIn);
         }
