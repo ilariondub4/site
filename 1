@@ -1010,13 +1010,13 @@ if (selectedSlot) {
             USER_CITY = USER_CITIES[currentCityIndex];
             localStorage.setItem('currentCityIndex', currentCityIndex);
             console.log(`🔄 Переходимо до наступного міста: ${USER_CITY}`);
-            const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для спроби наступного міста`);
             setTimeout(() => location.reload(), reloadIn);
         } else {
             console.log('🏁 Усі міста перебрано, терміни не знайдено. Починаємо спочатку.');
             localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс для початку циклу знову
-            const reloadIn = Math.floor(Math.random() * (18000 - 12000 + 1)) + 12000;
+            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для початку нового циклу міст`);
             setTimeout(() => location.reload(), reloadIn);
         }
