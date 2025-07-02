@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        D1  
+// @name        C1  
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -29,7 +29,7 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C2';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C1';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
@@ -45,7 +45,7 @@ const DEFAULT_STEP3_SELECT_1_VALUE = '242';
 const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-tAI05uKgscI-pbjTtBhwKWWJzO4Hu2J5x8fSdz-FeKyrNXJ9SRnkQ3dEfRPVe4BXSyCdfIu0BVT3BlbkFJz4IMD2ySwtgjmOWJG24G9AEHD_fg0UWUOo3lyjg5KSxzXRp45mkqSzDIB6_j9B6raC3gN_AJEAA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-bos-gJVZq1AIJcXl9JCi2cuxOSl3KpX6J5f6aJTMltGG56YdOLjUo4vJcVi1AVxaUs7RJD3v5AT3BlbkFJGTkcwP4LK8j00pLy-_7JrFXej1nAl-_mXrSWpQSmHbTONHSdqwOCDC6-XPDbLJsjv5W57Y6-gAA';
 const DEFAULT_OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUjA';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
