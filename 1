@@ -813,7 +813,7 @@ async function waitWithPauseOption(ms = 3500) {
             console.warn('❌ Кнопка langSK не знайдена навіть після очікування');
         }
 
-        // 🕒 Через 60 сек перевірка буфера обміну
+        // 🕒 Через 45 сек перевірка буфера обміну
         setTimeout(async () => {
             if (isScriptStopped) return;
             try {
@@ -827,7 +827,7 @@ async function waitWithPauseOption(ms = 3500) {
             } catch (err) {
                 console.error('⚠️ Помилка при читанні буфера:', err);
             }
-        }, 60000); // 60 000 мс = 60 сек
+        }, 45000); // 45000 мс = 45 сек
 
         await wait(2239); // даємо час після кліку
         // 1️⃣ CAPTCHA
@@ -1010,13 +1010,13 @@ if (selectedSlot) {
             USER_CITY = USER_CITIES[currentCityIndex];
             localStorage.setItem('currentCityIndex', currentCityIndex);
             console.log(`🔄 Переходимо до наступного міста: ${USER_CITY}`);
-            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+            const reloadIn = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для спроби наступного міста`);
             setTimeout(() => location.reload(), reloadIn);
         } else {
             console.log('🏁 Усі міста перебрано, терміни не знайдено. Починаємо спочатку.');
             localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс для початку циклу знову
-            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+            const reloadIn = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для початку нового циклу міст`);
             setTimeout(() => location.reload(), reloadIn);
         }
