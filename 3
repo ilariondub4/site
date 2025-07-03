@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        Universal main  
+// @name        C2  
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -45,7 +45,7 @@ const DEFAULT_STEP3_SELECT_1_VALUE = '242';
 const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-tAI05uKgscI-pbjTtBhwKWWJzO4Hu2J5x8fSdz-FeKyrNXJ9SRnkQ3dEfRPVe4BXSyCdfIu0BVT3BlbkFJz4IMD2ySwtgjmOWJG24G9AEHD_fg0UWUOo3lyjg5KSxzXRp45mkqSzDIB6_j9B6raC3gN_AJEAA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-swoG0U3R8ilyO1SZ5ZgJPbkGF9jyQE43kg90RCIQYvOf6xdOv0kqxbz8Wkkp87byNEY2Uu2Lb8T3BlbkFJeqD4EYn0rlUfx4RjFIGKQILyDkr6l3A4sqfgd9wKu1cJTYEyySyCzb0XRSWFdNL8Qh_CN20z4AA';
 const DEFAULT_OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUjA';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
@@ -318,7 +318,7 @@ config1 = {
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
     const USER_PASSPORT = 'T'; // просто окремо тут
-    const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
+    const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
     // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
@@ -813,7 +813,7 @@ async function waitWithPauseOption(ms = 3500) {
             console.warn('❌ Кнопка langSK не знайдена навіть після очікування');
         }
 
-        // 🕒 Через 60 сек перевірка буфера обміну
+        // 🕒 Через 45 сек перевірка буфера обміну
         setTimeout(async () => {
             if (isScriptStopped) return;
             try {
@@ -827,7 +827,7 @@ async function waitWithPauseOption(ms = 3500) {
             } catch (err) {
                 console.error('⚠️ Помилка при читанні буфера:', err);
             }
-        }, 60000); // 60 000 мс = 60 сек
+        }, 45000); // 45000 мс = 45 сек
 
         await wait(2239); // даємо час після кліку
         // 1️⃣ CAPTCHA
@@ -1010,13 +1010,13 @@ if (selectedSlot) {
             USER_CITY = USER_CITIES[currentCityIndex];
             localStorage.setItem('currentCityIndex', currentCityIndex);
             console.log(`🔄 Переходимо до наступного міста: ${USER_CITY}`);
-            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+            const reloadIn = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для спроби наступного міста`);
             setTimeout(() => location.reload(), reloadIn);
         } else {
             console.log('🏁 Усі міста перебрано, терміни не знайдено. Починаємо спочатку.');
             localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс для початку циклу знову
-            const reloadIn = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+            const reloadIn = Math.floor(Math.random() * (4500 - 2500 + 1)) + 2500;
             console.log(`🔄 Перезавантаження через ${reloadIn / 1000} с для початку нового циклу міст`);
             setTimeout(() => location.reload(), reloadIn);
         }
