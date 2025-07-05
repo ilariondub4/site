@@ -608,19 +608,41 @@ config1 = {
         el.blur();
     }
 
-    async function solveCaptcha() {
-        if (isScriptStopped) return;
-        const imgEl = await waitForElement('captchaImage');
-        const inputEl = await waitForElement('answer');
-        if (!imgEl || !inputEl) return;
+  async function solveCaptcha() {
+    if (isScriptStopped) return;
 
-        const base64 = await imageToBase64(imgEl);
-        const text = await recognizeCaptcha(base64);
-        await typeCaptchaLikeHuman(inputEl, text);
-        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
-        setTimeout(() => (inputEl.style.cssText = ''), 3000);
-    }
+    // ⏳ 1. Очікування перед початком (імітація реакції людини)
+    await wait(weightedRandomDelay(3220, 3520));
 
+    // 🖼 2. Чекаємо появу зображення капчі
+    const imgEl = await waitForElement('captchaImage');
+    if (!imgEl) return;
+
+    await wait(weightedRandomDelay(2840, 3250)); // ⏳ пауза після зображення
+
+    // 📝 3. Чекаємо появу інпуту
+    const inputEl = await waitForElement('answer');
+    if (!inputEl) return;
+
+    await wait(weightedRandomDelay(2450, 2720)); // ⏳ перед конвертацією в base64
+
+    // 🎞 4. Конвертація зображення
+    const base64 = await imageToBase64(imgEl);
+
+    await wait(weightedRandomDelay(2430, 2720)); // ⏳ перед розпізнаванням
+
+    // 🧠 5. Розпізнавання тексту капчі
+    const text = await recognizeCaptcha(base64);
+
+    await wait(weightedRandomDelay(2605, 2880)); // ⏳ перед введенням
+
+    // ⌨️ 6. Введення капчі
+    await typeCaptchaLikeHuman(inputEl, text);
+
+    // (необов’язково) візуальний фідбек
+    // inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+    // setTimeout(() => (inputEl.style.cssText = ''), 3000);
+}
     /* ------------------------------------------------------------------
        🗒  Налаштування полів
     ------------------------------------------------------------------ */
@@ -798,7 +820,7 @@ async function waitWithPauseOption(ms = 3500) {
         if (langBtn) {
             langBtn.click();
             console.log('🚀 "langSK" натиснуто');
-            await wait(2500); // даємо час з'явитися повідомленню про помилку
+            await wait(1200); // даємо час з'явитися повідомленню про помилку
 
             const captchaError = [...document.querySelectorAll('span, div')]
                 .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
@@ -837,12 +859,17 @@ async function waitWithPauseOption(ms = 3500) {
 //         await fillFields(step1Fields, 'Step 1');
 //         if (isScriptStopped) return;
 
-// 🔁 Розпізнаємо капчу фоном, отримуємо тільки текст
-const captchaTextPromise = solveCaptcha({ returnOnlyText: true }); // новий параметр
+
+
+// 🔁 Запускаємо вирішення капчі у фоні
+const captchaTextPromise = solveCaptcha({ returnOnlyText: true });
+
+// ✅ Заповнюємо Step 1, поки капча обробляється
 
 // ✅ Заповнюємо Step 1, поки капча обробляється
 await fillFields(step1Fields, 'Step 1');
 if (isScriptStopped) return;
+
 
 // ⏳ Чекаємо, поки отримаємо текст капчі
 const captchaText = await captchaTextPromise;
@@ -856,6 +883,8 @@ if (captchaInput && captchaText) {
 } else {
     console.warn('⚠️ Не вдалося вставити капчу');
 }
+
+
 
         if (!skipSubmit) {
             const btn = document.getElementById('loadSecondFormButton');
@@ -960,12 +989,11 @@ if (captchaInput && captchaText) {
 
         console.log('📝 Очікування вибору міста…');
 
-        await wait(weightedRandomDelay(1700, 2500));
+        await wait(weightedRandomDelay(1200, 1500));
         if (isScriptStopped) return;
 
 
-        await wait(1546);
-        if (isScriptStopped) return;
+
 
       const allAvailableSlots = [
     ...document.querySelectorAll('input[type="radio"][name="offices"]')
