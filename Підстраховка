@@ -462,7 +462,7 @@ if (!skipSubmit) {
     triggerStep2Button.addEventListener(
       'change',
       async () => {
-        await wait(weightedRandomDelay(700, 1200));
+        await wait(weightedRandomDelay(1700, 2500));
         await fillFields(step2Fields, 'Step 2');
         const submitBtn = document.getElementById('submitter1');
         if (submitBtn) {
