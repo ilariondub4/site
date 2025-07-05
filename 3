@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        D1
+// @name        D1  
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -281,7 +281,7 @@ async function confirmLoadServerConfig(timeout = 3000) {
 
     // --- З config (тільки тут!)
     // const config1 = await getUserConfig(DEVICE_ID);
-   const useServerConfig = await confirmLoadServerConfig(3000);
+   const useServerConfig = await confirmLoadServerConfig(5000);
 
 let config1;
 if (useServerConfig) {
@@ -608,44 +608,19 @@ config1 = {
         el.blur();
     }
 
-  async function solveCaptcha() {
-    if (isScriptStopped) return;
+    async function solveCaptcha() {
+        if (isScriptStopped) return;
+        const imgEl = await waitForElement('captchaImage');
+        const inputEl = await waitForElement('answer');
+        if (!imgEl || !inputEl) return;
 
-    // ⏳ 1. Очікування перед початком (імітація реакції людини)
-    await wait(weightedRandomDelay(3520, 3620));
+        const base64 = await imageToBase64(imgEl);
+        const text = await recognizeCaptcha(base64);
+        await typeCaptchaLikeHuman(inputEl, text);
+        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+        setTimeout(() => (inputEl.style.cssText = ''), 3000);
+    }
 
-    // 🖼 2. Чекаємо появу зображення капчі
-    const imgEl = await waitForElement('captchaImage');
-    if (!imgEl) return;
-
-    await wait(weightedRandomDelay(3250, 3550)); // ⏳ пауза після зображення
-
-    // 📝 3. Чекаємо появу інпуту
-    const inputEl = await waitForElement('answer');
-    if (!inputEl) return;
-
-    await wait(weightedRandomDelay(3220, 3520)); // ⏳ перед конвертацією в base64
-
-    // 🎞 4. Конвертація зображення
-    const base64 = await imageToBase64(imgEl);
-
-    await wait(weightedRandomDelay(3400, 3620)); // ⏳ перед розпізнаванням
-
-    // 🧠 5. Розпізнавання тексту капчі
-    const text = await recognizeCaptcha(base64);
-
-    await wait(weightedRandomDelay(3350, 3710)); // ⏳ перед введенням
-
-    // ⌨️ 6. Введення капчі
-    await typeCaptchaLikeHuman(inputEl, text);
-
-        await wait(weightedRandomDelay(3200, 3470)); // ⏳ перед введенням
-
-
-    // (необов’язково) візуальний фідбек
-    // inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
-    // setTimeout(() => (inputEl.style.cssText = ''), 3000);
-}
     /* ------------------------------------------------------------------
        🗒  Налаштування полів
     ------------------------------------------------------------------ */
@@ -812,6 +787,7 @@ async function waitWithPauseOption(ms = 3500) {
             return;
         }
 
+        console.log(`🚀 Старт автозаповнення для міста: ${USER_CITY}`);
 
         // Очищення буфера обміну після вставлення
         await navigator.clipboard.writeText('');
@@ -823,7 +799,7 @@ async function waitWithPauseOption(ms = 3500) {
         if (langBtn) {
             langBtn.click();
             console.log('🚀 "langSK" натиснуто');
-            await wait(1200); // даємо час з'явитися повідомленню про помилку
+            await wait(2500); // даємо час з'явитися повідомленню про помилку
 
             const captchaError = [...document.querySelectorAll('span, div')]
                 .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
@@ -853,41 +829,14 @@ async function waitWithPauseOption(ms = 3500) {
             }
         }, 45000); // 45000 мс = 45 сек
 
-        await wait(1200); // даємо час після кліку
+        await wait(2239); // даємо час після кліку
         // 1️⃣ CAPTCHA
-//         await solveCaptcha();
-//         if (isScriptStopped) return;
+        await solveCaptcha();
+        if (isScriptStopped) return;
 
-//         // 2️⃣ Step 1
-//         await fillFields(step1Fields, 'Step 1');
-//         if (isScriptStopped) return;
-
-
-
-// 🔁 Запускаємо вирішення капчі у фоні
-const captchaTextPromise = solveCaptcha({ returnOnlyText: true });
-
-// ✅ Заповнюємо Step 1, поки капча обробляється
-
-// ✅ Заповнюємо Step 1, поки капча обробляється
-await fillFields(step1Fields, 'Step 1');
-if (isScriptStopped) return;
-
-
-// ⏳ Чекаємо, поки отримаємо текст капчі
-const captchaText = await captchaTextPromise;
-if (isScriptStopped) return;
-
-// ✅ Вставляємо текст капчі у поле тільки зараз
-const captchaInput = document.querySelector('#captcha-input, input[name="captcha"], input[name="answer"]'); // адаптуй
-if (captchaInput && captchaText) {
-    captchaInput.value = captchaText;
-    console.log(`✅ Капча вставлена: ${captchaText}`);
-} else {
-    console.warn('⚠️ Не вдалося вставити капчу');
-}
-
-
+        // 2️⃣ Step 1
+        await fillFields(step1Fields, 'Step 1');
+        if (isScriptStopped) return;
 
         if (!skipSubmit) {
             const btn = document.getElementById('loadSecondFormButton');
@@ -992,11 +941,12 @@ if (captchaInput && captchaText) {
 
         console.log('📝 Очікування вибору міста…');
 
-        await wait(weightedRandomDelay(2000, 2500));
+        await wait(weightedRandomDelay(700, 1200));
         if (isScriptStopped) return;
 
 
-
+        await wait(1546);
+        if (isScriptStopped) return;
 
       const allAvailableSlots = [
     ...document.querySelectorAll('input[type="radio"][name="offices"]')
@@ -1027,7 +977,7 @@ if (selectedSlot) {
     const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
     await sendTelegramMessage(msg);
 
-    await wait(weightedRandomDelay(1000, 1300));
+    await wait(weightedRandomDelay(700, 1200));
     await fillFields(step2Fields, 'Step 2');
 
     const submitBtn = document.getElementById('submitter1');
@@ -1079,6 +1029,6 @@ if (selectedSlot) {
         console.log('Скрипт знаходиться в зупиненому стані. Натисніть "Продовжити" для запуску.');
     }
     // Запускаємо перевірку Telegram на фоні
-   // startTelegramLoop();
+    startTelegramLoop();
 
 })();
