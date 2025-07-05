@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        D1  
+// @name        D1
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -281,7 +281,7 @@ async function confirmLoadServerConfig(timeout = 3000) {
 
     // --- З config (тільки тут!)
     // const config1 = await getUserConfig(DEVICE_ID);
-   const useServerConfig = await confirmLoadServerConfig(5000);
+   const useServerConfig = await confirmLoadServerConfig(3000);
 
 let config1;
 if (useServerConfig) {
@@ -608,18 +608,34 @@ config1 = {
         el.blur();
     }
 
-    async function solveCaptcha() {
-        if (isScriptStopped) return;
-        const imgEl = await waitForElement('captchaImage');
-        const inputEl = await waitForElement('answer');
-        if (!imgEl || !inputEl) return;
+   async function solveCaptcha() {
+    if (isScriptStopped) return;
 
-        const base64 = await imageToBase64(imgEl);
-        const text = await recognizeCaptcha(base64);
-        await typeCaptchaLikeHuman(inputEl, text);
-        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
-        setTimeout(() => (inputEl.style.cssText = ''), 3000);
-    }
+    console.log('🧩 Пошук CAPTCHA...');
+    const imgEl = await waitForElement('captchaImage');
+    await wait(weightedRandomDelay(1200, 1500));
+
+    const inputEl = await waitForElement('answer');
+    if (!imgEl || !inputEl) return;
+
+    console.log('🖼 Перетворення зображення у base64...');
+    await wait(weightedRandomDelay(1200, 1400));
+    const base64 = await imageToBase64(imgEl);
+
+    console.log('🤖 Надсилання в OpenAI...');
+    await wait(weightedRandomDelay(1500, 1800));
+    const text = await recognizeCaptcha(base64);
+
+    console.log(`⌨️ Введення капчі: ${text}`);
+    await wait(weightedRandomDelay(1400, 1600));
+    await typeCaptchaLikeHuman(inputEl, text);
+
+    inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+    setTimeout(() => (inputEl.style.cssText = ''), 3000);
+
+    console.log('✅ Капча введена');
+    await wait(weightedRandomDelay(2200, 2415)); // Фінальна пауза
+}
 
     /* ------------------------------------------------------------------
        🗒  Налаштування полів
@@ -677,67 +693,76 @@ config1 = {
     /* ------------------------------------------------------------------
        🔄  Заповнення полів (human-like)
     ------------------------------------------------------------------ */
-    async function fillFields(fields, label) {
-        if (isScriptStopped) return;
-        for (const [id, value, type] of fields) {
-            if (isScriptStopped) return;
-            let el = document.getElementById(id);
-            if (!el && type === 'radio') {
-                // Це місце для вибору радіо-кнопки міста
-                el = [...document.querySelectorAll('input[type="radio"][name="offices"]')].find(
-                    (n) => n.id && n.id.startsWith(USER_CITY), // Використовуємо USER_CITY
-                );
-                if (el) {
-                    const now = new Date().toLocaleString();
-                    const msg = `🕒 ${now}\n🆔 ${el.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
-                    console.log(msg);
-                    await sendTelegramMessage(msg); // 🔔 надсилання в Telegram
-                }
-            }
-            if (!el) continue;
+async function fillFields(fields, label, fast = false) {
+    if (isScriptStopped) return;
 
+    for (const [id, value, type] of fields) {
+        if (isScriptStopped) return;
+        let el = document.getElementById(id);
+
+        if (!el && type === 'radio') {
+            el = [...document.querySelectorAll('input[type="radio"][name="offices"]')]
+                .find((n) => n.id && n.id.startsWith(USER_CITY));
+        }
+        if (!el) continue;
+
+        if (!fast) {
             const preDelay = delayedFields[id]
                 ? delayedFields[id] + randomDelay(config.delayedFieldJitterMin, config.delayedFieldJitterMax)
                 : weightedRandomDelay(config.preFieldDelayMin, config.preFieldDelayMax);
             await wait(preDelay);
-            if (isScriptStopped) return;
-            el.focus();
-            await wait(weightedRandomDelay(50, 180));
+        } else {
+            // ✅ швидкий режим: маленька пауза між полями
+            await wait(weightedRandomDelay(1000, 1200));
+        }
 
-            try {
-                switch (type) {
-                    case 'text':
-                        await typeValue(el, value);
-                        break;
-                    case 'select':
+        el.focus();
+        await wait(30);
+
+        try {
+            switch (type) {
+                case 'text':
+                    if (fast) {
                         el.value = value;
                         triggerEvents(el);
-                        break;
-                    case 'checkbox':
-                        el.checked = Boolean(value);
-                        triggerEvents(el);
-                        break;
-                    case 'click':
-                        el.click();
-                        break;
-                    case 'custom':
-                        await value(el);
-                        break;
-                    case 'radio':
-                        el.checked = true;
-                        triggerEvents(el);
-                        break;
-                }
-            } catch (e) {
-                console.error(`[${label}] ${id}:`, e);
+                    } else {
+                        await typeValue(el, value);
+                    }
+                    break;
+                case 'select':
+                    el.value = value;
+                    triggerEvents(el);
+                    break;
+                case 'checkbox':
+                    el.checked = Boolean(value);
+                    triggerEvents(el);
+                    break;
+                case 'click':
+                    el.click();
+                    break;
+                case 'custom':
+                    await value(el);
+                    break;
+                case 'radio':
+                    el.checked = true;
+                    triggerEvents(el);
+                    break;
             }
+        } catch (e) {
+            console.error(`[${label}] ${id}:`, e);
+        }
 
+        if (!fast) {
             await wait(weightedRandomDelay(config.postFieldDelayMin, config.postFieldDelayMax));
             if (Math.random() < config.longRestChance) {
                 await wait(weightedRandomDelay(config.longRestMin, config.longRestMax));
             }
+        } else {
+            // ✅ коротка пауза після поля
+            await wait(weightedRandomDelay(80, 140));
         }
     }
+}
 
     // 1. Функція з паузою на 3.5с + ручне підтвердження
 async function waitWithPauseOption(ms = 3500) {
@@ -787,7 +812,6 @@ async function waitWithPauseOption(ms = 3500) {
             return;
         }
 
-        console.log(`🚀 Старт автозаповнення для міста: ${USER_CITY}`);
 
         // Очищення буфера обміну після вставлення
         await navigator.clipboard.writeText('');
@@ -799,7 +823,7 @@ async function waitWithPauseOption(ms = 3500) {
         if (langBtn) {
             langBtn.click();
             console.log('🚀 "langSK" натиснуто');
-            await wait(2500); // даємо час з'явитися повідомленню про помилку
+            await wait(1000); // даємо час з'явитися повідомленню про помилку
 
             const captchaError = [...document.querySelectorAll('span, div')]
                 .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
@@ -829,14 +853,15 @@ async function waitWithPauseOption(ms = 3500) {
             }
         }, 45000); // 45000 мс = 45 сек
 
-        await wait(2239); // даємо час після кліку
+        await wait(1000); // даємо час після кліку
         // 1️⃣ CAPTCHA
-        await solveCaptcha();
-        if (isScriptStopped) return;
+// розгадування капчі йде в паралель
+const captchaPromise = solveCaptcha();
 
-        // 2️⃣ Step 1
-        await fillFields(step1Fields, 'Step 1');
-        if (isScriptStopped) return;
+// а це виконується швидко
+await fillFields(step1Fields, 'Step 1', true);
+// потім чекаєш, коли розгадається капча
+await captchaPromise;
 
         if (!skipSubmit) {
             const btn = document.getElementById('loadSecondFormButton');
@@ -1029,6 +1054,5 @@ if (selectedSlot) {
         console.log('Скрипт знаходиться в зупиненому стані. Натисніть "Продовжити" для запуску.');
     }
     // Запускаємо перевірку Telegram на фоні
-    startTelegramLoop();
 
 })();
