@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        C2  
+// @name        D1
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -29,8 +29,8 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C2';
-const BASE_URL = "https://manager-term.fly.dev";
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'D1';
+const BASE_URL = "https://manager1-term.fly.dev";
 
 // Дані користувача за замовчуванням
 const DEFAULT_USER_NAME = 'Ihor';
@@ -45,8 +45,8 @@ const DEFAULT_STEP3_SELECT_1_VALUE = '242';
 const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-swoG0U3R8ilyO1SZ5ZgJPbkGF9jyQE43kg90RCIQYvOf6xdOv0kqxbz8Wkkp87byNEY2Uu2Lb8T3BlbkFJeqD4EYn0rlUfx4RjFIGKQILyDkr6l3A4sqfgd9wKu1cJTYEyySyCzb0XRSWFdNL8Qh_CN20z4AA';
-const DEFAULT_OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUjA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-s-Nf0DpMfEzx_o3diWSIZKuBnPu8vbPVdGfq3M4jkPBFxqBXhvlcfeBaEB1pr7OxRrKxmNWAyHT3BlbkFJmssjJMyjKWDZZHBFvxyiSt3xoQlAM3ayQCRU9ZvqQgOMNWUhjCKQVGfpk5Nl50rBHWzIen-1YAA';
+const DEFAULT_OPENAI_PROJECT_ID = 'proj_pajasHryWt9O5GGv2xFaZ5QeA';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
 
@@ -281,7 +281,7 @@ async function confirmLoadServerConfig(timeout = 3000) {
 
     // --- З config (тільки тут!)
     // const config1 = await getUserConfig(DEVICE_ID);
-   const useServerConfig = await confirmLoadServerConfig(5000);
+   const useServerConfig = await confirmLoadServerConfig(3000);
 
 let config1;
 if (useServerConfig) {
@@ -787,7 +787,6 @@ async function waitWithPauseOption(ms = 3500) {
             return;
         }
 
-        console.log(`🚀 Старт автозаповнення для міста: ${USER_CITY}`);
 
         // Очищення буфера обміну після вставлення
         await navigator.clipboard.writeText('');
@@ -829,14 +828,34 @@ async function waitWithPauseOption(ms = 3500) {
             }
         }, 45000); // 45000 мс = 45 сек
 
-        await wait(2239); // даємо час після кліку
+        await wait(1200); // даємо час після кліку
         // 1️⃣ CAPTCHA
-        await solveCaptcha();
-        if (isScriptStopped) return;
+//         await solveCaptcha();
+//         if (isScriptStopped) return;
 
-        // 2️⃣ Step 1
-        await fillFields(step1Fields, 'Step 1');
-        if (isScriptStopped) return;
+//         // 2️⃣ Step 1
+//         await fillFields(step1Fields, 'Step 1');
+//         if (isScriptStopped) return;
+
+// 🔁 Розпізнаємо капчу фоном, отримуємо тільки текст
+const captchaTextPromise = solveCaptcha({ returnOnlyText: true }); // новий параметр
+
+// ✅ Заповнюємо Step 1, поки капча обробляється
+await fillFields(step1Fields, 'Step 1');
+if (isScriptStopped) return;
+
+// ⏳ Чекаємо, поки отримаємо текст капчі
+const captchaText = await captchaTextPromise;
+if (isScriptStopped) return;
+
+// ✅ Вставляємо текст капчі у поле тільки зараз
+const captchaInput = document.querySelector('#captcha-input, input[name="captcha"], input[name="answer"]'); // адаптуй
+if (captchaInput && captchaText) {
+    captchaInput.value = captchaText;
+    console.log(`✅ Капча вставлена: ${captchaText}`);
+} else {
+    console.warn('⚠️ Не вдалося вставити капчу');
+}
 
         if (!skipSubmit) {
             const btn = document.getElementById('loadSecondFormButton');
