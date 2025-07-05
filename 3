@@ -30,7 +30,7 @@ async function isDeviceEnabled(deviceId) {
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
 const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'D1';
-const BASE_URL = "https://manager1-term.fly.dev";
+const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
 const DEFAULT_USER_NAME = 'Ihor';
@@ -612,32 +612,35 @@ config1 = {
     if (isScriptStopped) return;
 
     // ⏳ 1. Очікування перед початком (імітація реакції людини)
-    await wait(weightedRandomDelay(3220, 3520));
+    await wait(weightedRandomDelay(3520, 3620));
 
     // 🖼 2. Чекаємо появу зображення капчі
     const imgEl = await waitForElement('captchaImage');
     if (!imgEl) return;
 
-    await wait(weightedRandomDelay(2840, 3250)); // ⏳ пауза після зображення
+    await wait(weightedRandomDelay(3250, 3550)); // ⏳ пауза після зображення
 
     // 📝 3. Чекаємо появу інпуту
     const inputEl = await waitForElement('answer');
     if (!inputEl) return;
 
-    await wait(weightedRandomDelay(2450, 2720)); // ⏳ перед конвертацією в base64
+    await wait(weightedRandomDelay(3220, 3520)); // ⏳ перед конвертацією в base64
 
     // 🎞 4. Конвертація зображення
     const base64 = await imageToBase64(imgEl);
 
-    await wait(weightedRandomDelay(2430, 2720)); // ⏳ перед розпізнаванням
+    await wait(weightedRandomDelay(3400, 3620)); // ⏳ перед розпізнаванням
 
     // 🧠 5. Розпізнавання тексту капчі
     const text = await recognizeCaptcha(base64);
 
-    await wait(weightedRandomDelay(2605, 2880)); // ⏳ перед введенням
+    await wait(weightedRandomDelay(3350, 3710)); // ⏳ перед введенням
 
     // ⌨️ 6. Введення капчі
     await typeCaptchaLikeHuman(inputEl, text);
+
+        await wait(weightedRandomDelay(3200, 3470)); // ⏳ перед введенням
+
 
     // (необов’язково) візуальний фідбек
     // inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
@@ -989,7 +992,7 @@ if (captchaInput && captchaText) {
 
         console.log('📝 Очікування вибору міста…');
 
-        await wait(weightedRandomDelay(1200, 1500));
+        await wait(weightedRandomDelay(2000, 2500));
         if (isScriptStopped) return;
 
 
@@ -1024,7 +1027,7 @@ if (selectedSlot) {
     const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
     await sendTelegramMessage(msg);
 
-    await wait(weightedRandomDelay(700, 1200));
+    await wait(weightedRandomDelay(1000, 1300));
     await fillFields(step2Fields, 'Step 2');
 
     const submitBtn = document.getElementById('submitter1');
@@ -1076,6 +1079,6 @@ if (selectedSlot) {
         console.log('Скрипт знаходиться в зупиненому стані. Натисніть "Продовжити" для запуску.');
     }
     // Запускаємо перевірку Telegram на фоні
-    startTelegramLoop();
+   // startTelegramLoop();
 
 })();
