@@ -750,7 +750,7 @@ config1 = {
                 await wait(weightedRandomDelay(config.longRestMin, config.longRestMax));
             }
         } else {
-          await wait(800 + Math.floor(Math.random() * 501)); // 800-1300 мс
+          await wait(1000 + Math.floor(Math.random() * 1301)); // 800-1300 мс
         }
     }
 }
@@ -794,88 +794,64 @@ async function waitWithPauseOption(ms = 3500) {
     });
 }
 
-    /* ------------------------------------------------------------------
-       🚀  Основний сценарій
-    ------------------------------------------------------------------ */
-    async function runMainScenario() {
-        if (isScriptStopped) {
-            console.log('Скрипт зупинено. Запуск відкладено.');
-            return;
-        }
+  async function runMainScenario() {
+    if (isScriptStopped) {
+        console.log('Скрипт зупинено. Запуск відкладено.');
+        return;
+    }
 
+    await navigator.clipboard.writeText('');
+    console.log('🧹 Буфер очищено після вставлення PIN');
+    await wait(weightedRandomDelay(800, 1500));
 
-        // Очищення буфера обміну після вставлення
-        await navigator.clipboard.writeText('');
-        console.log('🧹 Буфер очищено після вставлення PIN');
+    // Кнопка мови (langSK)
+    const langBtn = await waitForElement('langSK');
+    if (langBtn) {
+        langBtn.click();
+        console.log('🚀 "langSK" натиснуто');
+        await wait(1200); // Дати трохи часу на оновлення інтерфейсу
+    } else {
+        console.warn('❌ Кнопка langSK не знайдена!');
+        return;
+    }
 
-        await wait(weightedRandomDelay(800, 1500));
-        // 🔘 Натискання langSK одразу на старті
-        const langBtn = await waitForElement('langSK');
-        if (langBtn) {
-            langBtn.click();
-            console.log('🚀 "langSK" натиснуто');
-            await wait(2500); // даємо час з'явитися повідомленню про помилку
+    // --- Паралельний запуск капчі і полів ---
+    const captchaPromise = (async () => {
+        const imgEl = await waitForElement('captchaImage');
+        if (!imgEl) return null;
+        const base64 = await imageToBase64(imgEl);
+        return await recognizeCaptcha(base64);
+    })();
 
-            const captchaError = [...document.querySelectorAll('span, div')]
-                .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
+    const fieldsPromise = fillFields(step1Fields, 'Step 1');
 
-            if (captchaError) {
-                console.warn('❌ Капча невірна. Перезавантаження...');
-                setTimeout(() => location.reload(), 3000); // даємо 3 сек і перезавантажуємо
-                return;
-            }
-        } else {
-            console.warn('❌ Кнопка langSK не знайдена навіть після очікування');
-        }
+    // Чекаємо обидва процеси
+    const [captchaText] = await Promise.all([captchaPromise, fieldsPromise]);
+    if (isScriptStopped) return;
 
-        // 🕒 Через 45 сек перевірка буфера обміну
-        setTimeout(async () => {
-            if (isScriptStopped) return;
-            try {
-                const clipboard = await navigator.clipboard.readText();
-                if (!clipboard.trim()) {
-                    console.warn('🕒 Через 60 сек буфер обміну порожній. Перезавантаження...');
-                    handleNoSlotsFound(); // Викликаємо логіку переходу до наступного міста
-                } else {
-                    console.log('✅ Буфер обміну НЕ порожній. Не перезавантажуємо.');
-                }
-            } catch (err) {
-                console.error('⚠️ Помилка при читанні буфера:', err);
-            }
-        }, 45000); // 45000 мс = 45 сек
+    // --- Вводимо капчу ---
+    const inputEl = await waitForElement('answer');
+    if (inputEl && captchaText) {
+        await typeCaptchaLikeHuman(inputEl, captchaText);
+        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+        setTimeout(() => (inputEl.style.cssText = ''), 3000);
+    } else {
+        console.warn('❌ Не вдалося знайти поле капчі чи текст капчі');
+        handleNoSlotsFound();
+        return;
+    }
 
-        await wait(2239); // даємо час після кліку
-        // 1️⃣ CAPTCHA
-        await solveCaptcha();
-        if (isScriptStopped) return;
+    // --- Натискаємо “Далі” ---
+    const btn = await waitForElement('loadSecondFormButton');
+    if (btn) {
+        btn.click();
+        console.log('🚀 "loadSecondFormButton" натиснуто');
+    } else {
+        console.warn('❌ Кнопка loadSecondFormButton не знайдена');
+        handleNoSlotsFound();
+        return;
+    }
 
-        // 2️⃣ Step 1
-        await fillFields(step1Fields, 'Step 1');
-        if (isScriptStopped) return;
-
-        if (!skipSubmit) {
-            const btn = document.getElementById('loadSecondFormButton');
-            if (btn) {
-                btn.click();
-                console.log('🚀 "loadSecondFormButton" натиснуто');
-                await wait(2500); // даємо час з'явитися повідомленню про помилку
-
-                const captchaError = [...document.querySelectorAll('span, div')]
-                    .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
-                if (captchaError) {
-                    console.warn('❌ Капча невірна. Перезавантаження...');
-                    handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
-                    return;
-                }
-
-            } else {
-                console.warn('❌ Кнопка loadSecondFormButton не знайдена');
-            }
-        } else {
-            console.warn('🚫 Капча невірна. Кнопка не натиснута');
-            handleNoSlotsFound(); // Перезавантаження і спроба наступного міста
-            return;
-        }
 
         // 3️⃣ Чекаємо селект міст
         const triggerStep2Button = await waitForElement('f1-life-situation-select2');
