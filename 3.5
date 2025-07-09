@@ -1,8 +1,4 @@
-
-    /* ------------------------------------------------------------------
-       ⚙️  Налаштування «human-like» пауз
-    ------------------------------------------------------------------ */
-    const config = {
+ const config = {
         // між натисканнями клавіш
         typingDelayMin: 50,
         typingDelayMax: 150,
@@ -284,34 +280,18 @@
         el.blur();
     }
 
-   async function solveCaptcha() {
-    if (isScriptStopped) return;
+    async function solveCaptcha() {
+        if (isScriptStopped) return;
+        const imgEl = await waitForElement('captchaImage');
+        const inputEl = await waitForElement('answer');
+        if (!imgEl || !inputEl) return;
 
-    console.log('🧩 Пошук CAPTCHA...');
-    const imgEl = await waitForElement('captchaImage');
-    await wait(weightedRandomDelay(1200, 1500));
-
-    const inputEl = await waitForElement('answer');
-    if (!imgEl || !inputEl) return;
-
-    console.log('🖼 Перетворення зображення у base64...');
-    await wait(weightedRandomDelay(1200, 1400));
-    const base64 = await imageToBase64(imgEl);
-
-    console.log('🤖 Надсилання в OpenAI...');
-    await wait(weightedRandomDelay(1500, 1800));
-    const text = await recognizeCaptcha(base64);
-
-    console.log(`⌨️ Введення капчі: ${text}`);
-    await wait(weightedRandomDelay(1400, 1600));
-    await typeCaptchaLikeHuman(inputEl, text);
-
-    inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
-    setTimeout(() => (inputEl.style.cssText = ''), 3000);
-
-    console.log('✅ Капча введена');
-    await wait(weightedRandomDelay(2200, 2415)); // Фінальна пауза
-}
+        const base64 = await imageToBase64(imgEl);
+        const text = await recognizeCaptcha(base64);
+        await typeCaptchaLikeHuman(inputEl, text);
+        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+        setTimeout(() => (inputEl.style.cssText = ''), 3000);
+    }
 
     /* ------------------------------------------------------------------
        🗒  Налаштування полів
@@ -369,9 +349,11 @@
     /* ------------------------------------------------------------------
        🔄  Заповнення полів (human-like)
     ------------------------------------------------------------------ */
-async function fillFields(fields, label, fast = false) {
-    if (isScriptStopped) return;
 
+  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+
+ async function fillFields(fields, label) {
+    if (isScriptStopped) return;
     for (const [id, value, type] of fields) {
         if (isScriptStopped) return;
         let el = document.getElementById(id);
@@ -379,30 +361,36 @@ async function fillFields(fields, label, fast = false) {
         if (!el && type === 'radio') {
             el = [...document.querySelectorAll('input[type="radio"][name="offices"]')]
                 .find((n) => n.id && n.id.startsWith(USER_CITY));
+            if (el && HUMAN_MODE === 0) {
+                const now = new Date().toLocaleString();
+                const msg = `🕒 ${now}\n🆔 ${el.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
+                console.log(msg);
+                await sendTelegramMessage(msg);
+            }
         }
         if (!el) continue;
 
-        if (!fast) {
+        if (HUMAN_MODE === 0) {
+            // Людські паузи
             const preDelay = delayedFields[id]
                 ? delayedFields[id] + randomDelay(config.delayedFieldJitterMin, config.delayedFieldJitterMax)
                 : weightedRandomDelay(config.preFieldDelayMin, config.preFieldDelayMax);
             await wait(preDelay);
+            if (isScriptStopped) return;
+            el.focus();
+            await wait(weightedRandomDelay(50, 180));
         } else {
-            // ✅ швидкий режим: маленька пауза між полями
-            await wait(weightedRandomDelay(1000, 1200));
+            el.focus();
         }
-
-        el.focus();
-        await wait(30);
 
         try {
             switch (type) {
                 case 'text':
-                    if (fast) {
+                    if (HUMAN_MODE === 0) {
+                        await typeValue(el, value);
+                    } else {
                         el.value = value;
                         triggerEvents(el);
-                    } else {
-                        await typeValue(el, value);
                     }
                     break;
                 case 'select':
@@ -428,14 +416,13 @@ async function fillFields(fields, label, fast = false) {
             console.error(`[${label}] ${id}:`, e);
         }
 
-        if (!fast) {
+        if (HUMAN_MODE === 0) {
             await wait(weightedRandomDelay(config.postFieldDelayMin, config.postFieldDelayMax));
             if (Math.random() < config.longRestChance) {
                 await wait(weightedRandomDelay(config.longRestMin, config.longRestMax));
             }
         } else {
-            // ✅ коротка пауза після поля
-            await wait(weightedRandomDelay(80, 140));
+          await wait(800 + Math.floor(Math.random() * 501)); // 800-1300 мс
         }
     }
 }
@@ -499,7 +486,7 @@ async function waitWithPauseOption(ms = 3500) {
         if (langBtn) {
             langBtn.click();
             console.log('🚀 "langSK" натиснуто');
-            await wait(1000); // даємо час з'явитися повідомленню про помилку
+            await wait(2500); // даємо час з'явитися повідомленню про помилку
 
             const captchaError = [...document.querySelectorAll('span, div')]
                 .find(el => el.textContent?.toLowerCase().includes('nesprávny kód') || el.textContent?.toLowerCase().includes('nesprávne'));
@@ -529,15 +516,14 @@ async function waitWithPauseOption(ms = 3500) {
             }
         }, 45000); // 45000 мс = 45 сек
 
-        await wait(1000); // даємо час після кліку
+        await wait(2239); // даємо час після кліку
         // 1️⃣ CAPTCHA
-// розгадування капчі йде в паралель
-const captchaPromise = solveCaptcha();
+        await solveCaptcha();
+        if (isScriptStopped) return;
 
-// а це виконується швидко
-await fillFields(step1Fields, 'Step 1', true);
-// потім чекаєш, коли розгадається капча
-await captchaPromise;
+        // 2️⃣ Step 1
+        await fillFields(step1Fields, 'Step 1');
+        if (isScriptStopped) return;
 
         if (!skipSubmit) {
             const btn = document.getElementById('loadSecondFormButton');
