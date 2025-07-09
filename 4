@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        A2
+// @name        B1
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -27,15 +27,14 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
   const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
 
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'A2';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'B1';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
-const DEFAULT_USER_NAME = 'Ihor';
 const DEFAULT_USER_SURNAME = 'Hrysha';
 const DEFAULT_USER_BIRTHDATE = '30.03.1988';
-const DEFAULT_USER_PHONE = '+421944872574';
-const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a13@gmail.com';
+const DEFAULT_USER_PHONE = '+421940792910';
+const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a14@gmail.com';
 const DEFAULT_USER_CITIES = ["OCP Michalovce", "OCP Košice"]; // Зберігаємо як масив
 
 // Значення для форми за замовчуванням
@@ -315,7 +314,7 @@ config1 = {
     const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
-    const USER_PASSPORT = 'GT21892'; // просто окремо тут
+    const USER_PASSPORT = 'TA1242'; // просто окремо тут
     const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
