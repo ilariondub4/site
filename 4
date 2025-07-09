@@ -1,4 +1,97 @@
+// ==UserScript==
+// @name        C2  
+// @namespace   Violentmonkey Scripts
+// @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
+// @grant       none
+// @version     1.6
+// @author      -
+// @description Автоматичне заповнення форми MINV з Telegram, CAPTCHA, GPT-4o, DeepSeek, фіксованими ключами та UI для редагування.
+// @run-at      document-end
+// ==/UserScript==
 
+// Пристрій
+
+async function isDeviceEnabled(deviceId) {
+    try {
+      const res1 = await fetch(${BASE_URL}/api/config/${deviceId});
+      const data = await res1.json();
+        return data.enabled !== false;
+    } catch (err) {
+        console.warn('❌ Неможливо перевірити активність пристрою. Вважаємо активним.');
+        return true;
+    }
+}
+
+// ==UserScript==
+// ... ваші @-директиви
+// ==/UserScript==
+
+// ============================================
+// КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
+// ============================================
+const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C2';
+const BASE_URL = "https://manager-term.fly.dev";
+
+// Дані користувача за замовчуванням
+  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+
+const DEFAULT_USER_NAME = 'Ihor';
+const DEFAULT_USER_SURNAME = 'Hrysha';
+const DEFAULT_USER_BIRTHDATE = '30.03.1988';
+const DEFAULT_USER_PHONE = '+421940727546';
+const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a17@gmail.com';
+const DEFAULT_USER_CITIES = ["OCP Michalovce", "OCP Košice"]; // Зберігаємо як масив
+
+// Значення для форми за замовчуванням
+const DEFAULT_STEP3_SELECT_1_VALUE = '242';
+const DEFAULT_STEP3_SELECT_2_VALUE = '243';
+
+// Ключі API (жорстко задані)
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-jiExLtlEoBvQj2w7XvHpS9XX6U75l8QPyIhUnUqDLjUvrlELtKcRc6AQPprOnxmsPXY0n8bkXXT3BlbkFJtYWlHtX6FbS18ZX25xfnj37PnHwekX_uT32IgzHXgetq1rxQ9nUjrl061Ss_oGOQqx5WzNSmUAA';
+const DEFAULT_OPENAI_PROJECT_ID = 'proj_MmWnjMU4YrsNumd8njlaMKRJA';
+const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
+const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
+
+// ... решта вашого коду ...
+
+function saveConfigToLocalStorage(config) {
+    localStorage.setItem('USER_NAME', config.USER_NAME || '');
+    localStorage.setItem('USER_SURNAME', config.USER_SURNAME || '');
+    localStorage.setItem('USER_BIRTHDATE', config.USER_BIRTHDATE || '');
+    localStorage.setItem('USER_PHONE', config.USER_PHONE || '');
+    localStorage.setItem('USER_EMAIL', config.USER_EMAIL || '');
+    localStorage.setItem('USER_CITIES', JSON.stringify(config.USER_CITIES || []));
+    localStorage.setItem('STEP3_SELECT_1_VALUE', config.STEP3_SELECT_1_VALUE || '');
+    localStorage.setItem('STEP3_SELECT_2_VALUE', config.STEP3_SELECT_2_VALUE || '');
+    // Ключі API теж можна оновлювати, якщо вони приходять з сервера
+    if (config.OPENAI_API_KEY) localStorage.setItem('OPENAI_API_KEY', config.OPENAI_API_KEY);
+    if (config.OPENAI_PROJECT_ID) localStorage.setItem('OPENAI_PROJECT_ID', config.OPENAI_PROJECT_ID);
+    if (config.TELEGRAM_BOT_TOKEN) localStorage.setItem('TELEGRAM_BOT_TOKEN', config.TELEGRAM_BOT_TOKEN);
+    if (config.TELEGRAM_CHAT_ID) localStorage.setItem('TELEGRAM_CHAT_ID', config.TELEGRAM_CHAT_ID);
+
+    // Також оновлюємо резервну копію
+    localStorage.setItem('userConfigBackup', JSON.stringify(config));
+}
+
+
+async function fetchConfigFromServer(id) {
+    try {
+        const res2 = await fetch(${BASE_URL}/api/config/${id}, { cache: "no-store" });
+        if (!res2.ok) throw new Error("Server error " + res2.status);
+        const data = await res2.json();
+        if (!data.USER_NAME || !data.USER_SURNAME) throw new Error("Broken config");
+        saveConfigToLocalStorage(data);
+        return data;
+    } catch (e) {
+        console.warn('⚠️ Сервер недоступний або повернув помилку:', e.message);
+        return null;
+    }
+}
+
+async function getUserConfig(id) {
+    // let cfg = await fetchConfigFromServer(id);
+    // cfg = cfg  JSON.parse(localStorage.getItem('userConfigBackup')  '{}');
     
 window.saveSettings = function () {
         localStorage.setItem('USER_NAME', document.getElementById('set_name').value);
