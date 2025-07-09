@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        D21
+// @name        B1
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -22,30 +22,27 @@ async function isDeviceEnabled(deviceId) {
     }
 }
 
-// ==UserScript==
-// ... ваші @-директиви
-// ==/UserScript==
-
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'D2';
+  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'B1';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
-const DEFAULT_USER_NAME = 'Ihor';
 const DEFAULT_USER_SURNAME = 'Hrysha';
 const DEFAULT_USER_BIRTHDATE = '30.03.1988';
-const DEFAULT_USER_PHONE = '+421904164965';
-const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a1711111@gmail.com';
+const DEFAULT_USER_PHONE = '+421940792910';
+const DEFAULT_USER_EMAIL = 'ivanikrakusinko1a1a14@gmail.com';
 const DEFAULT_USER_CITIES = ["OCP Michalovce", "OCP Košice"]; // Зберігаємо як масив
 
 // Значення для форми за замовчуванням
-const DEFAULT_STEP3_SELECT_1_VALUE = '226';
-const DEFAULT_STEP3_SELECT_2_VALUE = '245';
+const DEFAULT_STEP3_SELECT_1_VALUE = '242';
+const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-hDVVsuBF5eryHmuE4vtyBDgZKa0KVoTnmGqD7q2svOmUGJFI3YjToZnz6Nj93iwb6cEWCq7leUT3BlbkFJ49UUvOyMzcDEVjx-UnZC-wQutg62M3nHL2UsCZpRQvuTOgwciiq6pFPgmPw5oSCbw1Q6fyA28AA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-k--sE_aCqFTAari7PvrA0ySjPZmYBOTJcdR8Di5DdXU8xlwNw2Ns9l_mj4Y3q-iujGMcx_fdj7T3BlbkFJ9ooB4o3srruH8AIg-SbOYhWpM4dRz15WfxRlPqCIJFXrkIvpw6c3YsS2ubFWvmQb-p_wE5tscAA';
 const DEFAULT_OPENAI_PROJECT_ID = 'proj_i1jauovjNFo9CAZCUX8JmTwxA';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
@@ -317,7 +314,7 @@ config1 = {
     const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
-    const USER_PASSPORT = 'T'; // просто окремо тут
+    const USER_PASSPORT = 'TA1242'; // просто окремо тут
     const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
@@ -678,7 +675,6 @@ config1 = {
        🔄  Заповнення полів (human-like)
     ------------------------------------------------------------------ */
 
-  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
 
  async function fillFields(fields, label) {
     if (isScriptStopped) return;
