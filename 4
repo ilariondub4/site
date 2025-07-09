@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        C2  
+// @name        C2
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -13,7 +13,7 @@
 
 async function isDeviceEnabled(deviceId) {
     try {
-      const res1 = await fetch(${BASE_URL}/api/config/${deviceId});
+      const res1 = await fetch(`${BASE_URL}/api/config/${deviceId}`);
       const data = await res1.json();
         return data.enabled !== false;
     } catch (err) {
@@ -29,13 +29,12 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+
 const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'C2';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
-  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
-
 const DEFAULT_USER_NAME = 'Ihor';
 const DEFAULT_USER_SURNAME = 'Hrysha';
 const DEFAULT_USER_BIRTHDATE = '30.03.1988';
@@ -77,7 +76,7 @@ function saveConfigToLocalStorage(config) {
 
 async function fetchConfigFromServer(id) {
     try {
-        const res2 = await fetch(${BASE_URL}/api/config/${id}, { cache: "no-store" });
+        const res2 = await fetch(`${BASE_URL}/api/config/${id}`, { cache: "no-store" });
         if (!res2.ok) throw new Error("Server error " + res2.status);
         const data = await res2.json();
         if (!data.USER_NAME || !data.USER_SURNAME) throw new Error("Broken config");
@@ -91,21 +90,160 @@ async function fetchConfigFromServer(id) {
 
 async function getUserConfig(id) {
     // let cfg = await fetchConfigFromServer(id);
-    // cfg = cfg  JSON.parse(localStorage.getItem('userConfigBackup')  '{}');
-    
-window.saveSettings = function () {
+    // cfg = cfg || JSON.parse(localStorage.getItem('userConfigBackup') || '{}');
+
+      const enabled = await isDeviceEnabled(id);
+    let cfg = null;
+
+    if (enabled) {
+        cfg = await fetchConfigFromServer(id);
+        if (cfg) {
+            localStorage.setItem('userConfigBackup', JSON.stringify(cfg));
+        } else {
+            cfg = JSON.parse(localStorage.getItem('userConfigBackup') || '{}');
+        }
+    } else {
+        console.warn(`⛔ Пристрій ${id} вимкнений — конфіг беремо з localStorage або дефолтів`);
+        cfg = JSON.parse(localStorage.getItem('userConfigBackup') || '{}');
+    }
+
+ return {
+    USER_NAME: localStorage.getItem('USER_NAME') || cfg.USER_NAME || DEFAULT_USER_NAME,
+    USER_SURNAME: localStorage.getItem('USER_SURNAME') || cfg.USER_SURNAME || DEFAULT_USER_SURNAME,
+    USER_BIRTHDATE: localStorage.getItem('USER_BIRTHDATE') || cfg.USER_BIRTHDATE || DEFAULT_USER_BIRTHDATE,
+    USER_PHONE: localStorage.getItem('USER_PHONE') || cfg.USER_PHONE || DEFAULT_USER_PHONE,
+    USER_EMAIL: localStorage.getItem('USER_EMAIL') || cfg.USER_EMAIL || DEFAULT_USER_EMAIL,
+    USER_CITIES: JSON.parse(localStorage.getItem('USER_CITIES') || JSON.stringify(cfg.USER_CITIES || DEFAULT_USER_CITIES)),
+    STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || cfg.STEP3_SELECT_1_VALUE || DEFAULT_STEP3_SELECT_1_VALUE,
+    STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || cfg.STEP3_SELECT_2_VALUE || DEFAULT_STEP3_SELECT_2_VALUE,
+    // --- Ключі ---
+    OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY,
+    OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || DEFAULT_OPENAI_PROJECT_ID,
+    TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || DEFAULT_TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || DEFAULT_TELEGRAM_CHAT_ID,
+};
+}
+
+
+
+
+
+async function confirmLoadServerConfig(timeout = 3000) {
+    return new Promise((resolve) => {
+        const box = document.createElement('div');
+        box.innerHTML = `
+            <div style="position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);z-index:99999;background:#fff;padding:22px 32px;border-radius:14px;box-shadow:0 8px 36px rgba(0,0,0,0.16);text-align:center;">
+                <h2>Взяти дані з сервера?</h2>
+                <p>Підтвердіть <b>Так</b> протягом 5 секунд.<br>Інакше скрипт продовжиться з localStorage.</p>
+                <button id="server_yes" style="padding:8px 24px;margin-right:18px;background:#4caf50;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:1.1em;">Так</button>
+            </div>
+        `;
+        document.body.appendChild(box);
+
+        let resolved = false;
+        document.getElementById('server_yes').onclick = () => {
+            resolved = true;
+            box.remove();
+            resolve(true);
+        };
+
+        setTimeout(() => {
+            if (!resolved) {
+                box.remove();
+                resolve(false);
+            }
+        }, timeout);
+    });
+}
+
+
+(async function () {
+    'use strict';
+
+
+    window.addEventListener('load', () => {
+        const btn = document.createElement('button');
+        btn.textContent = '⚙️ Налаштування';
+        btn.style = 'position:fixed;top:20px;right:20px;z-index:9999;padding:8px 12px;background:#333;color:white;border:none;border-radius:5px;cursor:pointer;';
+        btn.onclick = openSettingsModal;
+        document.body.appendChild(btn);
+
+        const stopBtn = document.createElement('button');
+        stopBtn.id = 'stopScriptBtn';
+        stopBtn.textContent = isScriptStopped ? '▶️ Продовжити' : '⏸️ Стоп';
+        stopBtn.style = 'position:fixed;top:60px;right:20px;z-index:9999;padding:8px 12px;background:#d9534f;color:white;border:none;border-radius:5px;cursor:pointer;';
+        if (isScriptStopped) {
+            stopBtn.style.backgroundColor = '#5cb85c'; // Зелений колір для "Продовжити"
+        }
+        stopBtn.onclick = toggleScriptStop;
+        document.body.appendChild(stopBtn);
+    });
+
+    window.openSettingsModal = function () {
+        const html = `
+            <div id="settingsModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;">
+                <div style="background:white;padding:20px;border-radius:8px;max-width:500px;width:100%;max-height:90vh;overflow:auto;">
+                    <h2 style="margin-top:0;">⚙️ Налаштування</h2>
+                    <label>👤 Ім’я: <input id="set_name" value="${USER_NAME}" /></label><br/><br/>
+                    <label>👤 Прізвище: <input id="set_surname" value="${USER_SURNAME}" /></label><br/><br/>
+                    <label>🎂 Дата нар.: <input id="set_birth" value="${USER_BIRTHDATE}" /></label><br/><br/>
+                    <label>📞 Тел.: <input id="set_phone" value="${USER_PHONE}" /></label><br/><br/>
+                    <label>📧 Email: <input id="set_email" value="${USER_EMAIL}" /></label><br/><br/>
+<label>🟦 Міста:</label><br/>
+<div id="set_cities_container" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+    ${availableCities.map(city => `
+        <label style="display: block; margin-bottom: 5px;">
+            <input type="checkbox" class="city-checkbox" value="OCP ${city}" ${USER_CITIES.includes('OCP ' + city) ? 'checked' : ''}>
+            OCP ${city}
+        </label>
+    `).join('')}
+</div>
+<br/>
+                    <label>📋 Тип:
+                        <select id="set_type">
+                            ${[
+                                ['213', '228', 'Doklady / pasy – Žiadosť o vydanie dokladu o pobyte'],
+                                ['242', '243', 'Dočasné útočisko – Registrácia dočasného útočiska'],
+                                ['242', '250', 'Dočasné útočisko – Žiadosť o vydanie dokladu o pobyte'],
+                                ['216', '225', 'Prechodný pobyt – Žiadosť o udelenie prechodného pobytu'],
+                                ['216', '226', 'Prechodný pobyt – Žiadosť o obnovenie prechodného pobytu'],
+                                ['216', '249', 'Prechodný pobyt – Podnikanie - udelenie'],
+                                ['216', '240', 'Prechodný pobyt – Rodina - udelenie'],
+                                ['216', '241', 'Prechodný pobyt – Rodina - obnova'],
+                                ['216', '244', 'Prechodný pobyt – Zamestnanie - udelenie'],
+                                ['216', '245', 'Prechodný pobyt – Zamestnanie - obnova'],
+                                ['218', '224', 'Trvalý pobyt – neobmedzený čas'],
+                                ['218', '223', 'Trvalý pobyt – на 5 rokov']
+                            ].map(([v1, v2, label]) => `<option value="${v1}|${v2}"${STEP3_SELECT_1_VALUE === v1 && STEP3_SELECT_2_VALUE === v2 ? ' selected' : ''}>${label} (${v1} → ${v2})</option>`).join('')}
+                        </select>
+                    </label><br/><br/>
+                    <label>🧠 OpenAI API: <input id="set_openai" value="${OPENAI_API_KEY}" /></label><br/><br/>
+                    <label>🧠 OpenAI Project: <input id="set_openai_proj" value="${OPENAI_PROJECT_ID}" /></label><br/><br/>
+                    <label>📬 TG Token: <input id="set_tg_token" value="${TELEGRAM_BOT_TOKEN}" /></label><br/><br/>
+                    <label>📬 TG Chat ID: <input id="set_tg_chat" value="${TELEGRAM_CHAT_ID}" /></label><br/><br/>
+                    <button onclick="saveSettings()">💾 Зберегти</button>
+                    <button onclick="document.getElementById('settingsModal').remove()">❌ Закрити</button>
+                </div>
+            </div>
+        `;
+        const modal = document.createElement('div');
+        modal.innerHTML = html;
+        document.body.appendChild(modal);
+    }
+
+  window.saveSettings = function () {
         localStorage.setItem('USER_NAME', document.getElementById('set_name').value);
         localStorage.setItem('USER_SURNAME', document.getElementById('set_surname').value);
         localStorage.setItem('USER_BIRTHDATE', document.getElementById('set_birth').value);
         localStorage.setItem('USER_PHONE', document.getElementById('set_phone').value);
         localStorage.setItem('USER_EMAIL', document.getElementById('set_email').value);
 
-        // * ОНОВЛЕНИЙ КОД ТУТ *
+        // *** ОНОВЛЕНИЙ КОД ТУТ ***
         const selectedCities = Array.from(document.querySelectorAll('#set_cities_container .city-checkbox:checked'))
                                .map(checkbox => checkbox.value);
         localStorage.setItem('USER_CITIES', JSON.stringify(selectedCities));
         localStorage.setItem('currentCityIndex', '0'); // Скидаємо індекс при збереженні нових міст
-        // ******
+        // **********************
 
         const [v1, v2] = document.getElementById('set_type').value.split('|');
         localStorage.setItem('STEP3_SELECT_1_VALUE', v1);
@@ -145,7 +283,7 @@ window.saveSettings = function () {
 
     // --- З config (тільки тут!)
     // const config1 = await getUserConfig(DEVICE_ID);
-   const useServerConfig = await confirmLoadServerConfig(5000);
+   const useServerConfig = await confirmLoadServerConfig(2500);
 
 let config1;
 if (useServerConfig) {
@@ -161,9 +299,7 @@ config1 = {
     STEP3_SELECT_1_VALUE: localStorage.getItem('STEP3_SELECT_1_VALUE') || DEFAULT_STEP3_SELECT_1_VALUE,
     STEP3_SELECT_2_VALUE: localStorage.getItem('STEP3_SELECT_2_VALUE') || DEFAULT_STEP3_SELECT_2_VALUE,
     // --- Ключі ---
-
-
-OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY,
+    OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY,
     OPENAI_PROJECT_ID: localStorage.getItem('OPENAI_PROJECT_ID') || DEFAULT_OPENAI_PROJECT_ID,
     TELEGRAM_BOT_TOKEN: localStorage.getItem('TELEGRAM_BOT_TOKEN') || DEFAULT_TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID: localStorage.getItem('TELEGRAM_CHAT_ID') || DEFAULT_TELEGRAM_CHAT_ID,
@@ -183,11 +319,12 @@ OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY
     const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
-    const USER_PASSPORT = 'CX37282'; // просто окремо тут
+    const USER_PASSPORT = 'GT21892'; // просто окремо тут
     const OPENAI_MODELS = ['gpt-4o', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
     // ... решта твого коду (UI, логіка) — нічого з USER_*/CITY_* НЕ бере з localStorage! ...
+
     /* ------------------------------------------------------------------
        ⚙️  Налаштування «human-like» пауз
     ------------------------------------------------------------------ */
@@ -543,7 +680,6 @@ OPENAI_API_KEY: localStorage.getItem('OPENAI_API_KEY') || DEFAULT_OPENAI_API_KEY
        🔄  Заповнення полів (human-like)
     ------------------------------------------------------------------ */
 
-  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
 
  async function fillFields(fields, label) {
     if (isScriptStopped) return;
