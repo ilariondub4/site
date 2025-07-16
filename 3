@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        E2 1111
+// @name        E2
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -946,6 +946,9 @@ async function waitWithPauseOption(ms = 3500) {
     return false;
 }
 
+
+  const MANUAL_MODE = true; // true — чекає ручного вибору селекта 2, false — автозаповнення
+
   async function runMainScenario() {
     if (isScriptStopped) {
         console.log('Скрипт зупинено. Запуск відкладено.');
@@ -1062,7 +1065,20 @@ await wait(weightedRandomDelay(200, 500));
                 await waitWithPauseOption(3200);
                 if (isScriptStopped) return;
 
-setSelectValueById('f1-life-situation-select2', STEP3_SELECT_2_VALUE);
+
+              if (MANUAL_MODE) {
+    // Чекаємо, поки користувач вибере select2 вручну
+    const select2 = await waitForElement('f1-life-situation-select2');
+    if (!select2) return;
+    console.log('⏳ MANUAL: Чекаю вибору селекта 2...');
+    await new Promise((resolve) => {
+        select2.addEventListener('change', () => setTimeout(resolve, 400), { once: true });
+    });
+    console.log('✅ MANUAL: Вибрано select2, йдемо далі...');
+} else {
+    setSelectValueById('f1-life-situation-select2', STEP3_SELECT_2_VALUE);
+}
+
             } catch (err) {
                 console.error('❌ Помилка з PIN-кодом:', err);
                 handleNoSlotsFound(); // Якщо проблеми з PIN, спробувати наступне місто
@@ -1101,15 +1117,18 @@ for (const city of USER_CITIES) {
 }
 
 if (selectedSlot) {
+      if (!MANUAL_MODE) {
     selectedSlot.click();
     console.log('✅ Обрано слот:', selectedSlot.id);
-
+      }
     const now = new Date().toLocaleString();
     const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
 await wait(weightedRandomDelay(400, 800));
    maybeScrollDown1(); // <--
     await sendTelegramMessage(msg);
-
+        if (MANUAL_MODE) {
+          return;
+        }
 
 
     await wait(weightedRandomDelay(700, 1200));
