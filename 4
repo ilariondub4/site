@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        E2
+// @name        E2 1111
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -280,6 +280,7 @@ async function confirmLoadServerConfig(timeout = 3000) {
     // const config1 = await getUserConfig(DEVICE_ID);
    const useServerConfig = await confirmLoadServerConfig(2500);
 
+
 let config1;
 if (useServerConfig) {
     config1 = await getUserConfig(DEVICE_ID);
@@ -401,7 +402,7 @@ config1 = {
                     console.log('✅ Знайдено select2');
                     break;
                 }
-                await wait(250);
+await wait(weightedRandomDelay(180, 340));
             }
 
             if (!select2) {
@@ -703,8 +704,8 @@ if (Math.random() < 0.03) { // 3% шанс “клікнути”
         const base64 = await imageToBase64(imgEl);
         const text = await recognizeCaptcha(base64);
         await typeCaptchaLikeHuman(inputEl, text);
-        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
-        setTimeout(() => (inputEl.style.cssText = ''), 3000);
+        // inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+        // setTimeout(() => (inputEl.style.cssText = ''), 3000);
     }
 
     /* ------------------------------------------------------------------
@@ -736,10 +737,10 @@ if (Math.random() < 0.08) { // 8% шанс, можна 0.10
 if (Math.random() < 0.03) { // 3% шанс “клікнути”
     document.body.click();
 }
-                await wait(120);
+await wait(weightedRandomDelay(100, 180));
                 el.value = USER_BIRTHDATE;
                 triggerEvents(el);
-                await wait(240);
+await wait(weightedRandomDelay(180, 320));
                 // повернення курсора і видалення крапок (ориг. логіка)
                 for (let i = 0; i < 10; i++) {
                     if (isScriptStopped) return;
@@ -960,7 +961,7 @@ async function waitWithPauseOption(ms = 3500) {
     if (langBtn) {
         langBtn.click();
         console.log('🚀 "langSK" натиснуто');
-        await wait(1200); // Дати трохи часу на оновлення інтерфейсу
+await wait(weightedRandomDelay(1100, 1500));
     } else {
         console.warn('❌ Кнопка langSK не знайдена!');
         return;
@@ -1024,7 +1025,7 @@ async function waitWithPauseOption(ms = 3500) {
 
         async function waitForPINConditions() {
             while (!odoslatClicked && skipSubmit) { // Чекаємо або кліку, або помилки капчі
-                await wait(500);
+await wait(weightedRandomDelay(400, 600));
                 if (isScriptStopped) return;
             }
         }
@@ -1034,7 +1035,7 @@ async function waitWithPauseOption(ms = 3500) {
 
         const pinCodeEl = await waitForElement('pin-code');
         if (pinCodeEl) {
-            await wait(10500);
+await wait(weightedRandomDelay(7000, 12000));
             if (isScriptStopped) return;
             try {
                 const clipboard = await navigator.clipboard.readText();
@@ -1052,13 +1053,13 @@ async function waitWithPauseOption(ms = 3500) {
                     console.log('🚀 "Odoslať" натиснуто');
                 }
 
-                await wait(3150);
+await wait(weightedRandomDelay(2900, 3550));
                 if (isScriptStopped) return;
 
 setSelectValueById('f1-life-situation-select1', STEP3_SELECT_1_VALUE);
 
-
-                await waitWithPauseOption(3500);
+await wait(weightedRandomDelay(200, 500));
+                await waitWithPauseOption(3200);
                 if (isScriptStopped) return;
 
 setSelectValueById('f1-life-situation-select2', STEP3_SELECT_2_VALUE);
@@ -1075,7 +1076,7 @@ setSelectValueById('f1-life-situation-select2', STEP3_SELECT_2_VALUE);
         if (isScriptStopped) return;
 
 
-        await wait(1546);
+await wait(weightedRandomDelay(1200, 1800));
         if (isScriptStopped) return;
 
       const allAvailableSlots = [
@@ -1105,8 +1106,7 @@ if (selectedSlot) {
 
     const now = new Date().toLocaleString();
     const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
-          await wait(555);
-
+await wait(weightedRandomDelay(400, 800));
    maybeScrollDown1(); // <--
     await sendTelegramMessage(msg);
 
