@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Universal support
+// @name         Prechodny
 // @namespace    Violentmonkey Scripts
 // @match        https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant        none
@@ -15,15 +15,21 @@
   /* ------------------------------------------------------------------
      🔐 Користувацькі константи (заповніть під себе)
   ------------------------------------------------------------------ */
-const OPENAI_MODEL = 'gpt-4-turbo';
-const OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUj';
+ const OPENAI_MODEL = 'gpt-4.1-mini';
+
+const OPENAI_PROJECT_ID = '111proj_NtHUbQd0hgmD2cIO6zb7VRUj';
   const OPENAI_API_KEY =
-    'sk-proj-iRXte7QBw41n495PX9tsu2KXtJLlKRT_lzDPQD2MiP1Sbzi8KMrVeLvrvZNyUrh09GxLs609hkT3BlbkFJtgjY7dSuDleG5aAbPX-05_bYa7e1xDJtKX2UFRYuUIjgLjo7ZralAvfAu1dv_WKORfNRqxM68AA';
-  const USER_NAME = 'Mykola';
-  const USER_SURNAME = 'Dan';
-  const USER_BIRTHDATE = '01.06.1998';
-  const USER_PHONE = '+421940083584';
-  const USER_EMAIL = 'ivanikrakusinko1a1a11@gmail.com';
+    '111sk-proj-Uj7LsIwI1fhLt9nqPIp_NsalZlJpBd4bZvyHaAm7MazpRee13ZLcPPs8FDIBm0-wzSDcfv-RNBT3BlbkFJH4mJ-YbnbdKcMcqg_9F9FiRMUSItjM8WpR3-Zo5ygm0I4tgbsR7WmzJftwUrBdZLX429O9odkA';
+  const USER_NAME = 'Ivan';
+  const USER_SURNAME = 'Rusyn';
+  const USER_BIRTHDATE = '01.01.1987';
+  // const USER_PHONE = '+421940546125';
+  // const USER_EMAIL = 'ivanikrakusinko1a1a22@gmail.com';
+
+    const USER_PHONE = '+421904164965';
+  const USER_EMAIL = 'ilariondub4@gmail.com';
+
+
   const USER_CITY = 'OCP Trenčín'; // назва міста без дати
   const USER_PASSPORT = 'T';
 
@@ -33,12 +39,12 @@ const OPENAI_PROJECT_ID = 'proj_NtHUbQd0hgmD2cIO6zb7VRUj';
   //const STEP3_SELECT_1_VALUE = '216';  const STEP3_SELECT_2_VALUE = '241'; //Prechodny zlucenie rodiny obnova
   //const STEP3_SELECT_1_VALUE = '218';  const STEP3_SELECT_2_VALUE = '224'; //Dlhodoby neobmedzeny
   //const STEP3_SELECT_1_VALUE = '213';  const STEP3_SELECT_2_VALUE = '228'; //Vydaj dokladov
-  //const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '243'; //Utecenec udelenie
+ // const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '243'; //Utecenec udelenie
   //const STEP3_SELECT_1_VALUE = '242';  const STEP3_SELECT_2_VALUE = '250'; //Utecenec vydaj
 
   const TELEGRAM_BOT_TOKEN =
-    '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
-  const TELEGRAM_CHAT_ID = '814270232A';
+    '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-E';
+  const TELEGRAM_CHAT_ID = '814270232';
 
   /* ------------------------------------------------------------------
      ⚙️  Налаштування «human-like» пауз
@@ -237,7 +243,7 @@ function startTelegramLoop() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${OPENAI_API_KEY}`,
         'OpenAI-Beta': 'assistants=v1',
-    'OpenAI-Project': OPENAI_PROJECT_ID,  
+    'OpenAI-Project': OPENAI_PROJECT_ID,
       },
       body: JSON.stringify({
       model: OPENAI_MODEL,
@@ -247,7 +253,7 @@ function startTelegramLoop() {
             content: [
               {
                 type: 'text',
-                //text: 'Розпізнай капчу. Відповідь має містити лише 5 символів: [a-z, 0-9]. Без жодних пояснень чи додаткового тексту. Виведи лише капчу.'   
+                //text: 'Розпізнай капчу. Відповідь має містити лише 5 символів: [a-z, 0-9]. Без жодних пояснень чи додаткового тексту. Виведи лише капчу.'
                 text: 'Extract the 5-character CAPTCHA code (a-z, 0-9). Only return the code, nothing else.',
 
 },
