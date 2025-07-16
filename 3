@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        B1
+// @name        E2 1111
 // @namespace   Violentmonkey Scripts
 // @match       https://portal.minv.sk/wps/portal/domov/ecu/ecu_elektronicke_sluzby/ecu-vysys/*
 // @grant       none
@@ -25,9 +25,9 @@ async function isDeviceEnabled(deviceId) {
 // ============================================
 // КОНСТАНТИ ТА ЗНАЧЕННЯ ЗА ЗАМОВЧУВАННЯМ
 // ============================================
-  const HUMAN_MODE = 1; // 0 = human-like (з паузами), 1 = fast (моментально)
+  const HUMAN_MODE = 0; // 0 = human-like (з паузами), 1 = fast (моментально)
 
-const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'B1';
+const DEVICE_ID = localStorage.getItem('DEVICE_ID') || 'E2';
 const BASE_URL = "https://manager-term.fly.dev";
 
 // Дані користувача за замовчуванням
@@ -42,8 +42,8 @@ const DEFAULT_STEP3_SELECT_1_VALUE = '242';
 const DEFAULT_STEP3_SELECT_2_VALUE = '243';
 
 // Ключі API (жорстко задані)
-const DEFAULT_OPENAI_API_KEY = 'sk-proj-k--sE_aCqFTAari7PvrA0ySjPZmYBOTJcdR8Di5DdXU8xlwNw2Ns9l_mj4Y3q-iujGMcx_fdj7T3BlbkFJ9ooB4o3srruH8AIg-SbOYhWpM4dRz15WfxRlPqCIJFXrkIvpw6c3YsS2ubFWvmQb-p_wE5tscAA';
-const DEFAULT_OPENAI_PROJECT_ID = 'proj_i1jauovjNFo9CAZCUX8JmTwxA';
+const DEFAULT_OPENAI_API_KEY = 'sk-proj-2yX6VEmqSveBIinrSB9qdbUkapQTxmKeLPCPS29pnQC5FQzgXddm2V-gfShBQiCsGSldrQworzT3BlbkFJrpKfdoYNNnxiPGHAE5NkvD7NWaend3VC9dDnoxz1-EJt-4vnMsbiv2wWnXV6TemMTMdCw9Nj8AA';
+const DEFAULT_OPENAI_PROJECT_ID = 'proj_EPcBD4OGjIUbtPlipSZEShQ5A';
 const DEFAULT_TELEGRAM_BOT_TOKEN = '8041735564:AAEOPeEFkF3RL4kdF8ZS02980WlKggTuV-EA';
 const DEFAULT_TELEGRAM_CHAT_ID = '814270232A';
 
@@ -280,6 +280,7 @@ async function confirmLoadServerConfig(timeout = 3000) {
     // const config1 = await getUserConfig(DEVICE_ID);
    const useServerConfig = await confirmLoadServerConfig(2500);
 
+
 let config1;
 if (useServerConfig) {
     config1 = await getUserConfig(DEVICE_ID);
@@ -314,7 +315,7 @@ config1 = {
     const OPENAI_PROJECT_ID = config1.OPENAI_PROJECT_ID;
     const TELEGRAM_BOT_TOKEN = config1.TELEGRAM_BOT_TOKEN;
     const TELEGRAM_CHAT_ID = config1.TELEGRAM_CHAT_ID;
-    const USER_PASSPORT = 'TA1242'; // просто окремо тут
+    const USER_PASSPORT = 'C11'; // просто окремо тут
     const OPENAI_MODELS = ['gpt-4.1', 'gpt-4.1-mini', 'gpt-4o', 'gpt-4'];
     const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-coder'];
 
@@ -343,12 +344,12 @@ config1 = {
         longRestMax: 1800,
 
         // «джиттер» для відкладених полів
-        delayedFieldJitterMin: 50,
-        delayedFieldJitterMax: 250,
+        delayedFieldJitterMin: 200,
+        delayedFieldJitterMax: 500,
 
         // очікування DOM-елемента
-        waitForElementMaxAttempts: 50,
-        waitForElementInterval: 200,
+        waitForElementMaxAttempts: 200,
+        waitForElementInterval: 500,
     };
 
     /* ------------------------------------------------------------------
@@ -401,7 +402,7 @@ config1 = {
                     console.log('✅ Знайдено select2');
                     break;
                 }
-                await wait(250);
+await wait(weightedRandomDelay(180, 340));
             }
 
             if (!select2) {
@@ -486,23 +487,103 @@ config1 = {
     /* ------------------------------------------------------------------
        ⌨️  Набір тексту «по-людськи»
     ------------------------------------------------------------------ */
-    async function typeValue(el, value) {
-        if (isScriptStopped) return;
-        el.value = '';
-        triggerEvents(el);
-        await wait(weightedRandomDelay(60, 140));
+//     async function typeValue(el, value) {
+//         if (isScriptStopped) return;
+//         el.value = '';
+//         triggerEvents(el);
+//         await wait(weightedRandomDelay(60, 140));
 
-        for (const char of String(value)) {
-            if (isScriptStopped) return;
-            el.value += char;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            await wait(weightedRandomDelay(config.typingDelayMin, config.typingDelayMax));
-            if (Math.random() < config.typingLongPauseChance) {
-                await wait(weightedRandomDelay(config.typingLongPauseMin, config.typingLongPauseMax));
+//         for (const char of String(value)) {
+//             if (isScriptStopped) return;
+//             el.value += char;
+//             el.dispatchEvent(new Event('input', { bubbles: true }));
+//             await wait(weightedRandomDelay(config.typingDelayMin, config.typingDelayMax));
+//             if (Math.random() < config.typingLongPauseChance) {
+//                 await wait(weightedRandomDelay(config.typingLongPauseMin, config.typingLongPauseMax));
+//             }
+//         }
+//         triggerEvents(el);
+//     }
+
+async function typeValue(el, value) {
+    if (isScriptStopped) return;
+    el.value = '';
+    triggerEvents(el);
+    await wait(weightedRandomDelay(60, 140));
+
+    let i = 0;
+    let fakeMoveUsed = false;
+
+    while (i < value.length) {
+        // "Відволіктись" мишкою 1 раз за поле
+        if (!fakeMoveUsed && Math.random() < 0.18) {
+            el.blur();
+            await wait(weightedRandomDelay(60, 250));
+            el.focus();
+          // Емуляція “відволікання”
+if (Math.random() < 0.08) { // 8% шанс, можна 0.10
+    el.blur();
+    await wait(weightedRandomDelay(100, 350));
+    el.focus();
+}
+if (Math.random() < 0.03) { // 3% шанс “клікнути”
+    document.body.click();
+}
+            fakeMoveUsed = true;
+        }
+
+        // "Помилка"
+        if (Math.random() < 0.03) {
+            const errorLen = 1 + Math.floor(Math.random() * 3);
+            let wrongChars = '';
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            for (let k = 0; k < errorLen; k++) {
+                wrongChars += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            el.value += wrongChars;
+            triggerEvents(el);
+
+            await wait(weightedRandomDelay(80, 250));
+            for (let k = 0; k < errorLen; k++) {
+                el.value = el.value.slice(0, -1);
+                triggerEvents(el);
+                await wait(weightedRandomDelay(50, 130));
             }
         }
+
+        // Додаємо правильну букву
+        el.value += value[i];
         triggerEvents(el);
+        await wait(weightedRandomDelay(config.typingDelayMin, config.typingDelayMax));
+        if (Math.random() < config.typingLongPauseChance) {
+            await wait(weightedRandomDelay(config.typingLongPauseMin, config.typingLongPauseMax));
+        }
+        i++;
     }
+    triggerEvents(el);
+
+    // Після завершення поля іноді “клацнути” кудись
+    if (Math.random() < 0.07) {
+        document.body.click();
+    }
+      maybeScrollDown(); // <-- ДОДАЙ ОЦЕ СЮДИ!
+
+}
+
+
+  async function fakeMouseMove(fields) {
+    // 20% шанс, що зараз ми “відволічемось”
+    if (Math.random() < 0.10) {
+        // Випадково обираємо одне з полів або body
+        const options = fields.map(([id]) => document.getElementById(id)).filter(Boolean).concat(document.body);
+        const randomEl = options[Math.floor(Math.random() * options.length)];
+        if (randomEl) {
+            randomEl.focus();
+            // Типу “ми на мить клікнули”
+            await wait(weightedRandomDelay(60, 200));
+        }
+    }
+}
 
     /* ------------------------------------------------------------------
        🖼  Розпізнавання CAPTCHA (GPT-4o Vision)
@@ -590,6 +671,15 @@ config1 = {
     async function typeCaptchaLikeHuman(el, text) {
         if (isScriptStopped) return;
         el.focus();
+      // Емуляція “відволікання”
+if (Math.random() < 0.08) { // 8% шанс, можна 0.10
+    el.blur();
+    await wait(weightedRandomDelay(100, 350));
+    el.focus();
+}
+if (Math.random() < 0.03) { // 3% шанс “клікнути”
+    document.body.click();
+}
         el.value = '';
         triggerEvents(el);
 
@@ -614,8 +704,8 @@ config1 = {
         const base64 = await imageToBase64(imgEl);
         const text = await recognizeCaptcha(base64);
         await typeCaptchaLikeHuman(inputEl, text);
-        inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
-        setTimeout(() => (inputEl.style.cssText = ''), 3000);
+        // inputEl.style.cssText = 'border:2px solid lime;background:#eaffea;';
+        // setTimeout(() => (inputEl.style.cssText = ''), 3000);
     }
 
     /* ------------------------------------------------------------------
@@ -625,9 +715,9 @@ config1 = {
         'residence-address-county-0': 2000,
         'residence-address-municipality-0': 2000,
         'residence-address-street-0': 2000,
-        'fs13-0-travel-doc-type': 500,
-        's42-check-gdpr-info': 700,
-        submitter1: 650,
+        'fs13-0-travel-doc-type': 950,
+        's42-check-gdpr-info': 950,
+        submitter1: 850,
     };
 
     const step1Fields = [
@@ -638,10 +728,19 @@ config1 = {
             async (el) => {
                 if (isScriptStopped) return;
                 el.focus();
-                await wait(120);
+              // Емуляція “відволікання”
+if (Math.random() < 0.08) { // 8% шанс, можна 0.10
+    el.blur();
+    await wait(weightedRandomDelay(100, 350));
+    el.focus();
+}
+if (Math.random() < 0.03) { // 3% шанс “клікнути”
+    document.body.click();
+}
+await wait(weightedRandomDelay(100, 180));
                 el.value = USER_BIRTHDATE;
                 triggerEvents(el);
-                await wait(240);
+await wait(weightedRandomDelay(180, 320));
                 // повернення курсора і видалення крапок (ориг. логіка)
                 for (let i = 0; i < 10; i++) {
                     if (isScriptStopped) return;
@@ -686,6 +785,8 @@ config1 = {
             el = [...document.querySelectorAll('input[type="radio"][name="offices"]')]
                 .find((n) => n.id && n.id.startsWith(USER_CITY));
             if (el && HUMAN_MODE === 0) {
+                  await fakeMouseMove(fields); // “Відволіклись” перед введенням поля
+
                 const now = new Date().toLocaleString();
                 const msg = `🕒 ${now}\n🆔 ${el.id}\n➡️ ${STEP3_SELECT_1_VALUE} --> ${STEP3_SELECT_2_VALUE}`;
                 console.log(msg);
@@ -701,10 +802,28 @@ config1 = {
                 : weightedRandomDelay(config.preFieldDelayMin, config.preFieldDelayMax);
             await wait(preDelay);
             if (isScriptStopped) return;
-            el.focus();
+            el.focus();// Емуляція “відволікання”
+if (Math.random() < 0.08) { // 8% шанс, можна 0.10
+    el.blur();
+    await wait(weightedRandomDelay(100, 350));
+    el.focus();
+}
+if (Math.random() < 0.03) { // 3% шанс “клікнути”
+    document.body.click();
+}
             await wait(weightedRandomDelay(50, 180));
         } else {
             el.focus();
+          // Емуляція “відволікання”
+if (Math.random() < 0.08) { // 8% шанс, можна 0.10
+    el.blur();
+    await wait(weightedRandomDelay(100, 350));
+    el.focus();
+}
+if (Math.random() < 0.03) { // 3% шанс “клікнути”
+    document.body.click();
+}
+
         }
 
         try {
@@ -717,9 +836,8 @@ config1 = {
                         triggerEvents(el);
                     }
                     break;
-                case 'select':
-                    el.value = value;
-                    triggerEvents(el);
+               case 'select':
+                    setSelectValueById(id, value);
                     break;
                 case 'checkbox':
                     el.checked = Boolean(value);
@@ -750,6 +868,30 @@ config1 = {
         }
     }
 }
+
+  function maybeScrollDown() {
+    if (Math.random() < 0.8) { // 80% шанс
+        window.scrollBy({
+            top: 60 + Math.random() * 40, // 60–100px вниз
+            left: 0,
+            behavior: 'smooth'
+        });
+    }
+}
+
+
+
+    function maybeScrollDown1() {
+    if (Math.random() < 0.8) { // 80% шанс
+        window.scrollBy({
+            top: 300 + Math.random() * 60, // 60–100px вниз
+            left: 0,
+            behavior: 'smooth'
+        });
+    }
+}
+
+
 
     // 1. Функція з паузою на 3.5с + ручне підтвердження
 async function waitWithPauseOption(ms = 3500) {
@@ -790,6 +932,20 @@ async function waitWithPauseOption(ms = 3500) {
     });
 }
 
+
+  function setSelectValueById(id, value) {
+    const select = document.getElementById(id);
+    if (select) {
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        // Опціонально: select.dispatchEvent(new Event('input', { bubbles: true }));
+        console.log(`✅ ${id} встановлено на`, value);
+        return true;
+    }
+    console.warn(`❌ Select ${id} не знайдено`);
+    return false;
+}
+
   async function runMainScenario() {
     if (isScriptStopped) {
         console.log('Скрипт зупинено. Запуск відкладено.');
@@ -805,7 +961,7 @@ async function waitWithPauseOption(ms = 3500) {
     if (langBtn) {
         langBtn.click();
         console.log('🚀 "langSK" натиснуто');
-        await wait(1200); // Дати трохи часу на оновлення інтерфейсу
+await wait(weightedRandomDelay(1100, 1500));
     } else {
         console.warn('❌ Кнопка langSK не знайдена!');
         return;
@@ -869,7 +1025,7 @@ async function waitWithPauseOption(ms = 3500) {
 
         async function waitForPINConditions() {
             while (!odoslatClicked && skipSubmit) { // Чекаємо або кліку, або помилки капчі
-                await wait(500);
+await wait(weightedRandomDelay(400, 600));
                 if (isScriptStopped) return;
             }
         }
@@ -879,7 +1035,7 @@ async function waitWithPauseOption(ms = 3500) {
 
         const pinCodeEl = await waitForElement('pin-code');
         if (pinCodeEl) {
-            await wait(10500);
+await wait(weightedRandomDelay(7000, 12000));
             if (isScriptStopped) return;
             try {
                 const clipboard = await navigator.clipboard.readText();
@@ -897,28 +1053,16 @@ async function waitWithPauseOption(ms = 3500) {
                     console.log('🚀 "Odoslať" натиснуто');
                 }
 
-                await wait(3150);
+await wait(weightedRandomDelay(2900, 3550));
                 if (isScriptStopped) return;
 
-                const select1 = document.getElementById('f1-life-situation-select1');
-                const option1 = select1?.querySelector(`option[value="${STEP3_SELECT_1_VALUE}"]`);
-                if (option1) {
-                    option1.setAttribute('selected', 'selected');
-                    triggerEvents(select1);
-                    console.log('✅ select1 встановлено');
-                }
+setSelectValueById('f1-life-situation-select1', STEP3_SELECT_1_VALUE);
 
-                await waitWithPauseOption(3500);
+await wait(weightedRandomDelay(200, 500));
+                await waitWithPauseOption(3200);
                 if (isScriptStopped) return;
 
-
-                const select2 = document.getElementById('f1-life-situation-select2');
-                const option2 = select2?.querySelector(`option[value="${STEP3_SELECT_2_VALUE}"]`);
-                if (option2) {
-                    option2.setAttribute('selected', 'selected');
-                    triggerEvents(select2);
-                    console.log('✅ select2 встановлено');
-                }
+setSelectValueById('f1-life-situation-select2', STEP3_SELECT_2_VALUE);
             } catch (err) {
                 console.error('❌ Помилка з PIN-кодом:', err);
                 handleNoSlotsFound(); // Якщо проблеми з PIN, спробувати наступне місто
@@ -932,7 +1076,7 @@ async function waitWithPauseOption(ms = 3500) {
         if (isScriptStopped) return;
 
 
-        await wait(1546);
+await wait(weightedRandomDelay(1200, 1800));
         if (isScriptStopped) return;
 
       const allAvailableSlots = [
@@ -962,7 +1106,11 @@ if (selectedSlot) {
 
     const now = new Date().toLocaleString();
     const msg = `🟢 ${now}\n✅ Знайдено термін у нашому місті:\n${selectedSlot.id}\n➡️ ${STEP3_SELECT_1_VALUE} → ${STEP3_SELECT_2_VALUE}`;
+await wait(weightedRandomDelay(400, 800));
+   maybeScrollDown1(); // <--
     await sendTelegramMessage(msg);
+
+
 
     await wait(weightedRandomDelay(700, 1200));
     await fillFields(step2Fields, 'Step 2');
